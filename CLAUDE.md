@@ -30,6 +30,14 @@ load SPEC.md whole; cite it by section when a detail is missing from docs/ai/.
    fast-forwards `main` after pySHACL passes.
 9. Every claim the agent emits has at least one evidence ref that exists in the context bundle.
 10. No em-dashes in any Markdown. Pre-commit enforces it.
+11. Never read the live `.env` file or any `.env.*` variant other than `.env.example`, by any
+    means: not Read, not Grep, not `cat`, `source`, `sed`, `head`, a `printenv` after loading
+    it, or a script that loads it. `.env.example` lists the variable names; that is all Claude
+    needs. Enforced by `.claude/settings.json` (Read deny rules plus a PreToolUse hook that
+    blocks any Bash, Read, Grep, or Glob call whose text mentions such a file). If a task seems
+    to need a value from the live file, stop and ask the user to run the command themselves.
+    Side effect: a shell command whose text merely mentions the file name is also blocked, so
+    edit documents that mention it with the Edit tool, not with a shell heredoc.
 
 ## Conventions
 

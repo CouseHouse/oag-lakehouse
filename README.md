@@ -6,6 +6,11 @@ the Cloudera platform by configuration.
 
 The full build-ready specification is in [SPEC.md](SPEC.md). Build progress is tracked in [PLAN.md](PLAN.md).
 
+For AI-assisted development, [CLAUDE.md](CLAUDE.md) holds the hard rules and conventions and
+[docs/ai/](docs/ai/00-index.md) holds compact, task-scoped extracts of the spec (about 8,000
+tokens in total versus about 55,000 for SPEC.md). SPEC.md remains the source of truth; a change
+to the spec updates the matching file in docs/ai/ in the same commit.
+
 ## What it does
 
 - Ingests NVD, CISA KEV, EPSS, CWE, CAPEC, MITRE ATT&CK, NIST SP 800-53 Rev 5 (OSCAL), and

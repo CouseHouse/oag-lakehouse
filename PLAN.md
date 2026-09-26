@@ -41,6 +41,7 @@ Goal: the directory tree, config loading, and quality gates exist before any ser
 - [ ] `Makefile` targets: `lint`, `generate`, `up-phase1`, `up`, `eval`, `replay` (later targets can be stubs that fail with a message)
 - [ ] `tests/` with one test for the config loader
 - [ ] GitHub Actions workflow running `make lint` and `pytest`
+- [ ] CI check that docs/ai/ files changed whenever SPEC.md changed in the same commit (warning only)
 
 Exit criteria:
 

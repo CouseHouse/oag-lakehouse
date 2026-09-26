@@ -1993,7 +1993,7 @@ The process instructions allowed up to five questions if the author could answer
 | Q12 | Is Cloudera Agent Studio LangGraph-compatible, or is the Workbench application the only path? | Cloudera documentation or a Cloudera contact. | 8 |
 | Q13 | Which Cloudera services are inside the FedRAMP Moderate boundary today? | FedRAMP Marketplace package details or Cloudera Government Solutions. | 8 |
 | Q14 | Does CDF's NiFi runtime permit `ExecuteStreamCommand` with Syft and Grype, or must scanning move to CDE? | Checklist item 5. | 8 |
-| Q15 | Should the NVD API key request be made now? | Yes; the form-based process may take days. Action for the author before Phase 2. | 2 |
+| Q15 | Should the NVD API key request be made now? | Resolved 2026-09-26: key received and stored in the local `.env` as `NVD_API_KEY`. | Closed |
 | Q16 | What is the exact CPRT deep link format for 800-53 Rev 5.2.0 controls (for the `sp800-53r5` prefix expansion)? | Check the CPRT site; the prefix map can change without affecting identifiers. | 2 |
 | Q17 | Which OpenVEX specification version is current, and does Grype 0.119 accept it? | Check the OpenVEX repository and test with `grype --vex`. | 5 |
 | Q19 | Which ATLAS v2026.09 technique IDs correspond to the threat model rows in 16.8? | Load the STIX bundle in Phase 3 and pick IDs from the loaded data rather than from memory. | 3 |

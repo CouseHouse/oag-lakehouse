@@ -19,11 +19,12 @@ Effort assumes evenings and weekends, about 10 to 12 hours per week. A "day" is 
 
 Progress log (newest first):
 
+- 2026-09-26: NVD API key received (Q15 closed). `.env.example` created.
 - 2026-09-26: SPEC.md 0.2.0 committed. Plan created. Nothing built yet.
 
 ## Before Phase 0
 
-- [ ] Request an NVD API key (https://nvd.nist.gov/developers/request-an-api-key). Needed by Phase 2; can take days.
+- [x] Request an NVD API key (https://nvd.nist.gov/developers/request-an-api-key). Received 2026-09-26. Stored in local `.env` as `NVD_API_KEY`, never committed.
 - [ ] Read SPEC.md section 25.1 and confirm or change the nine assumptions.
 - [ ] Decide where Phase 1 runs: WSL2 on the workstation (recommended to start) or the Proxmox VM.
 - [ ] Decide whether to pull A04, A05, A13 (image signing, AI BOM, red team pass) forward from Phase 6 to Phase 4.
@@ -36,7 +37,7 @@ Goal: the directory tree, config loading, and quality gates exist before any ser
 - [ ] `pyproject.toml` with `uv`; extras `agent`, `jobs`, `dags`, `evals`, `tools`
 - [ ] `config/base.yaml`, `config/local.yaml`, `config/cloudera.yaml` with every key named in section 8.4, values pointing at environment variables for secrets
 - [ ] `agent/config.py`: merge base and env YAML, resolve env vars, validate required keys, print redacted
-- [ ] `.env.example` listing every secret and endpoint name with no values
+- [x] `.env.example` listing every secret and endpoint name with no values (created 2026-09-26; extend as services land)
 - [ ] `.pre-commit-config.yaml`: ruff, secret scan, em-dash check for `*.md`
 - [ ] `Makefile` targets: `lint`, `generate`, `up-phase1`, `up`, `eval`, `replay` (later targets can be stubs that fail with a message)
 - [ ] `tests/` with one test for the config loader
@@ -303,7 +304,7 @@ Copied from SPEC.md section 25.3 so they can be checked off here. Update SPEC.md
 - [ ] Q12 Agent Studio and LangGraph compatibility (Phase 8)
 - [ ] Q13 Cloudera services inside the FedRAMP boundary (Phase 8)
 - [ ] Q14 Syft and Grype inside CDF NiFi (Phase 8)
-- [ ] Q15 NVD API key requested (before Phase 2)
+- [x] Q15 NVD API key requested (before Phase 2). Received 2026-09-26.
 - [ ] Q16 CPRT deep link format for 800-53 controls (Phase 2)
 - [ ] Q17 OpenVEX version accepted by Grype (Phase 5)
 - [ ] Q18 OSCAL POA&M milestone placement (Phase 5)

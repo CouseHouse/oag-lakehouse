@@ -83,6 +83,18 @@ compliance management passes all five conditions. The rejected candidates did no
 | Closed-world versus open-world: mainstream OAG assumes missing means no, but many domains need missing means unknown | Closure declared per predicate in the ontology; absence blocks in retrieval; a forced epistemic status on every claim; a SHACL shape that rejects negated claims on open predicates; five competency questions where "unknown" is the only correct answer |
 | Vendor lock-in as logic accumulates on the ontology | Ontology in LinkML; identifiers from public standards; interfaces limited to S3, Iceberg REST, the OpenAI API, openCypher, NiFi JSON, Airflow Python, and PySpark; the graph is derived and read-only, so the lakehouse tables remain the system of record |
 
+## Security and governance
+
+SPEC.md section 16 maps the design to named frameworks with cited versions: the OWASP Top 10
+for LLM Applications (2025, with 2026 IDs noted), the OWASP Top 10 for Agentic Applications
+(December 2025), MITRE ATLAS (loaded as STIX next to ATT&CK), the system's own NIST SP 800-53
+Rev 5 controls, data and model governance (classification labels, retention, model card,
+CycloneDX AI BOM, signed and scanned project images), separation of duties, a kill switch,
+an incident runbook, weekly automated red teaming, and alignment with OMB M-25-21, NIST AI
+RMF and the Generative AI Profile, CISA secure AI deployment guidance, and FedRAMP 20x.
+The model never has tools during generation and never writes queries; every action is held
+for a human approver who is not the requester.
+
 ## Stack
 
 | Layer | Local | Cloudera |

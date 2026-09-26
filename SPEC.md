@@ -7,7 +7,7 @@ Ontology-Augmented Generation for Federal Vulnerability and Compliance Managemen
 | Field | Value |
 |---|---|
 | Document | SPEC.md |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Date | 2026-09-26 |
 | Status | Draft for build. Not yet reviewed by a second person. |
 | Owner | Kyle Couse |
@@ -19,6 +19,7 @@ Change log
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1.0 | 2026-09-26 | Kyle Couse (drafted with Claude Fable 5.1) | Initial build-ready draft. Use case selected, ontology scoped, pipelines and milestones defined. |
+| 0.2.0 | 2026-09-26 | Kyle Couse (drafted with Claude Fable 5.1) | Section 16 extended with OWASP LLM and Agentic Top 10 mappings, MITRE ATLAS, the system's own 800-53 controls, data, model and supply chain governance, separation of duties, incident response, and federal AI governance alignment. Security actions A01 to A15 added to milestones. |
 
 Conventions used in this document:
 
@@ -1314,6 +1315,8 @@ Every action produces one `ops.audit_event` at request time (`action_requested`)
 
 ## 16. Security, governance, and threat model
 
+Sections 16.1 to 16.5 cover the threat model, service security, audit, the Ranger test, and federal accreditation items. Sections 16.6 to 16.13 map the design to external frameworks: the OWASP Top 10 for LLM Applications, the OWASP Top 10 for Agentic Applications, MITRE ATLAS, the system's own NIST SP 800-53 controls, data governance, model and supply chain governance, separation of duties and incident response, and federal AI governance memos. Actions that these mappings add to the build are collected in section 16.14.
+
 ### 16.1 Threat model
 
 | Threat | Vector | Impact | Mitigations |
@@ -1374,6 +1377,148 @@ Outcome handling: if bypass is confirmed (expected), the design statement is "Pu
 | FIPS 140 | Cloudera on premises supports a FIPS mode using validated modules (SafeLogic CryptoComply per 7.1.x docs; Bouncy Castle FIPS jars in 7.3.2 notes) on a FIPS-mode OS, new installs only. Cloudera states it does not guarantee that every platform component is itself FIPS validated. | **Verify** the FIPS 140-3 status for the target runtime version and whether Trino, PuppyGraph, and the Python services use validated modules (Python `ssl` bound to a FIPS OpenSSL on RHEL in FIPS mode is the usual approach). |
 | Accreditation boundary | The agency's ATO boundary would include the Cloudera environment, PuppyGraph, the vector store, the agent application, Langfuse, and the model serving tier. Public data ingestion crosses the boundary inbound only. No hosted model API is used. | **Verify** with the agency's ISSO. |
 | Data categorization | The project's own data is public plus synthetic. A real deployment would hold agency vulnerability data, typically categorized Moderate or High. | **Assumption** |
+
+### 16.6 OWASP Top 10 for LLM Applications mapping
+
+The OWASP GenAI Security Project publishes the Top 10 for LLM Applications. The 2025 edition (published 2024-11-18) is the widely cited list; a 2026 edition (v1.0, 2026-08-03) reorders it and renames System Prompt Leakage to Hidden Context Exposure. **Verify:** the 2026 item list below was taken from the OWASP page and two secondary summaries; confirm IDs against the 2026 PDF at https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/ before citing it in a customer document. The table uses 2025 IDs with the 2026 ID in parentheses.
+
+| OWASP item | How it applies here | Control in this design | Gap and action |
+|---|---|---|---|
+| LLM01 Prompt Injection (2026: LLM01) | Every chunk the model sees comes from attacker-influenced text: CVE descriptions, advisories, package metadata in SBOMs. | Chunks labeled with `trust_level` and delimited; the system prompt declares chunk content is data; no tools during generation; output confined to the claim schema; every claim needs an evidence ref in the bundle (`EvidenceRefShape`); injection classifier at ingest; seeded injection cases in the eval suite. | Add an output-side check: the critic flags any `answer_summary` that contains imperative text addressed to the user or to a system ("ignore", "approve", "run") and marks the answer partial. Action A01 in section 16.13. |
+| LLM02 Sensitive Information Disclosure (2026: LLM02) | Synthetic actor emails and, in a real deployment, agency asset and POA&M data. | Public plus synthetic data only in this build; Langfuse traces exclude secrets by construction because secrets never enter prompts; per-service credentials with least privilege. | Add a trace redaction rule and a data classification label per table (section 16.10). Action A02. |
+| LLM03 Supply Chain (2026: LLM04) | Model checkpoints, Python dependencies, container images, NiFi NARs, the Grype database. | Pinned Hugging Face revisions with recorded SHA-256; pinned image tags; `uv.lock`; Grype DB version recorded on every finding. | Add `safetensors` only and `trust_remote_code=false` as hard settings; sign project images with cosign; scan project images with Syft and Grype in CI; produce an AI BOM (section 16.11). Actions A03 to A05. |
+| LLM04 Data and Model Poisoning (2026: LLM05) | Poisoned advisories feeding the extraction loop; a tampered KEV or STIX file. | Section 16.1 row on data poisoning: TLS validation, SHA-256 on landed files, source allowlist, SHACL preventing advisory facts from overwriting NVD or KEV, WAP delta sanity checks, review queue. | Add a delta threshold table per source (for example, KEV entry count may not drop; NVD daily change above 5 percent of the table requires manual publish). Action A06. |
+| LLM05 Improper Output Handling (2026: LLM10) | Claims become tables, POA&M JSON, tickets, and VEX files that downstream tools consume. | Guided decoding to enums and CURIEs; OSCAL JSON Schema and SHACL validation before any artifact is queued; artifacts are data files, never executed. | The approval UI must HTML-escape all model text. Action A07. |
+| LLM06 Excessive Agency (2026: LLM03) | The agent can draft actions that change compliance records. | No write without human approval; role policy in `authorize`; the graph is read-only; the model has no tools during generation; rollback is itself an approved action. | Add separation of duties: the approver may not be the requester (section 16.12). Action A08. |
+| LLM07 System Prompt Leakage (2026: LLM08 Hidden Context Exposure) | The system prompt holds closure rules and the schema. | By design the system prompt contains no secrets and no access rules that matter if disclosed; authorization lives in code (`authorize`, `policy.py`), not in the prompt. | Document this as a rule: nothing in a prompt may be relied on for security. Action A09. |
+| LLM08 Vector and Embedding Weaknesses (2026: LLM09) | pgvector holds chunks from every trust level; a poisoned chunk with a high similarity could be retrieved for many questions. | Chunks are scoped by `mentioned_curies` from the graph, so similarity alone cannot pull in a chunk; unscoped chunks cap claim confidence at 0.5; `trust_level` is a filter. | Add per-actor row filtering in the vector query when the Ranger test forces role-based predicates (section 16.4). Action A10. |
+| LLM09 Misinformation (2026: LLM07) | Confident wrong answers about exploitation or control status. | The whole open-world design: closure declarations, absence blocks, forced epistemic status, `NegatedClaimShape`, citation on every claim, the closed-world false negative metric gated at zero. | None beyond continued eval coverage. |
+| LLM10 Unbounded Consumption (2026: LLM06) | Long questions, large result sets, extraction jobs over many chunks, denial of wallet on a GPU. | Token budget of 24,000 per turn; result cap of 200 entities; critic loop limit of 2; 90 second wall time; Spark batches of 16. | Add per-actor rate limits and daily token quotas at the agent API, and a vLLM `--max-num-seqs` ceiling shared with the extraction jobs through an Airflow pool. Action A11. |
+
+### 16.7 OWASP Top 10 for Agentic Applications mapping
+
+OWASP published the Top 10 for Agentic Applications on 2025-12-09 (https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/). This agent is single-agent, tool-free during generation, and read-only against the graph, which removes several items by construction. The table records that explicitly so a reviewer does not have to infer it.
+
+| Item | Applies? | Why, and the control |
+|---|---|---|
+| ASI01 Agent Goal Hijack | Yes | Injected text could steer the answer. Same controls as LLM01; the intent classifier is enum-guided, so a chunk cannot change the intent after classification because classification happens before retrieval. |
+| ASI02 Tool Misuse | Limited | The model has no tools during generation. Retrieval, validation, and sinks are code paths chosen by the graph, not by the model. The only model-influenced "tool" is the action draft, which is validated and held. |
+| ASI03 Identity and Privilege Abuse | Yes | The agent runs with its own service identities (read-only graph, read-only vector, read-write only to `ops.*`). Actor identity is carried in state and checked in `authorize`. Approval is a separate authenticated call. Section 16.12 adds separation of duties. |
+| ASI04 Agentic Supply Chain | Yes | Same as LLM03; in addition, LangGraph and its dependencies are pinned and scanned. No third-party agent plugins or MCP servers are used. |
+| ASI05 Unexpected Code Execution | No by construction | The agent never executes model output. Cypher queries are fixed templates with parameters; the model never writes Cypher or SQL. This is a design rule enforced by code review and by a test that greps `agent/` for `exec`, `eval`, and dynamic query construction. |
+| ASI06 Memory and Context Poisoning | Yes | The knowledge base is the memory. Controls: WAP validation, SHACL, the review queue, and closed-world sanity checks. The agent has no cross-turn conversational memory in this build. |
+| ASI07 Insecure Inter-Agent Communication | No by construction | Single agent. If Agent Studio packaging introduces sub-agents on Cloudera, this item reopens (section 22, Q12). |
+| ASI08 Cascading Failures | Yes | A wrong auto-published extraction candidate could propagate into answers and POA&M drafts. Controls: auto-publish only for authoritative sources at 0.95 confidence, provenance on every edge so a bad source version can be rolled back with `rollback_to_snapshot`, and the nightly eval as a tripwire. |
+| ASI09 Human-Agent Trust Exploitation | Yes | An approver could rubber-stamp drafts. Controls: the approval UI shows the SHACL result, the rule trace, and the evidence, not just the draft; the approver must be a different actor from the requester; approval rates per approver are a Langfuse metric reviewed monthly. |
+| ASI10 Rogue Agents | Limited | The kill switch (section 16.12) disables actions and retrieval independently; the agent has no persistence or scheduling authority of its own; Airflow owns all schedules. |
+
+### 16.8 MITRE ATLAS
+
+MITRE ATLAS (Adversarial Threat Landscape for AI Systems) is the AI-specific counterpart to ATT&CK and is published as STIX 2.1 at https://github.com/mitre-atlas/atlas-data (release v2026.09 on 2026-09-15: 16 tactics, 120 techniques, 88 sub-techniques, 40 mitigations; **Verify** on use). Because this project already loads ATT&CK STIX, the `load_attack` job also loads `stix-atlas.json` into `oag.technique` and `oag.tactic` with `framework = atlas`, so the threat model rows below can cite technique IDs and the demo can show the system's own threat model in the same graph as the customer's.
+
+| Threat model row (section 16.1) | ATLAS techniques (**Verify** IDs against v2026.09) |
+|---|---|
+| Prompt injection through ingested text | LLM Prompt Injection (direct and indirect) |
+| Data poisoning of the knowledge base | Poison Training Data is not applicable (no training); the applicable techniques are those for RAG poisoning and data manipulation in the AI supply chain |
+| Model supply chain | Publish Poisoned Models; AI Supply Chain Compromise |
+| Output manipulation and audit tampering | Not an ATLAS technique; mapped to ATT&CK Indicator Removal (T1070) instead |
+| Excessive agency | LLM Jailbreak and Prompt Injection leading to unauthorized actions |
+
+The mapping is stored in `docs/security/atlas-mapping.yaml` and rendered in the threat model page.
+
+### 16.9 The system's own NIST SP 800-53 Rev 5 controls
+
+The system tracks control implementation for the synthetic agency's systems. It must also state its own. The table lists the controls most relevant to an LLM application inside a federal boundary and where this design implements each. It is the seed of the system security plan a real deployment would need, and it uses the same `oag.control` identifiers the agent answers questions about. **Assumption:** a Moderate baseline.
+
+| Control | Title | Implementation in this design |
+|---|---|---|
+| AC-3, AC-6 | Access enforcement, least privilege | Per-service identities with read-only grants for the agent; Polaris and Postgres roles; action roles in `authorize`. |
+| AC-5 | Separation of duties | Requester and approver must differ (section 16.12). |
+| AU-2, AU-3, AU-12 | Audit events, content, generation | `ops.audit_event` with actor, snapshot ids, ontology, model, prompt, and rule versions; Langfuse traces; git history for artifacts. |
+| AU-9 | Protection of audit information | Iceberg append-only snapshots; audit copies in Langfuse and git; S3 object tags with hashes. |
+| AU-10 | Non-repudiation | Approval is an authenticated call by a named actor; artifacts carry the approver id and hash. |
+| CM-2, CM-3 | Baseline configuration, change control | Pinned versions in `infra/local/.env`; prompts, rules, and schema versioned and gated by `ontology_ci`. |
+| CM-8 | System component inventory | SBOMs of the project's own images (section 16.11), plus the AI BOM. |
+| IA-2, IA-5 | Identification and authentication, authenticator management | Bearer tokens per actor; service credentials in environment variables; no secrets in prompts or YAML. |
+| RA-5 | Vulnerability monitoring and scanning | The project's own images go through the same Syft and Grype pipeline as the synthetic agency, with KEV findings failing CI. |
+| SA-11 | Developer testing and evaluation | The eval harness, the injection cases, the red team pass in CI (section 16.11). |
+| SC-8 | Transmission confidentiality | TLS on every service that supports it; self-signed locally, platform certificates on Cloudera. |
+| SI-3 | Malicious code protection | No execution of model output (ASI05); dependency scanning. |
+| SI-4 | System monitoring | Langfuse, Airflow SLA alerts, NiFi bulletins, the nightly eval tripwire. |
+| SI-7 | Software, firmware, and information integrity | SHA-256 on landed files; cosign-signed images; pinned model revisions with recorded hashes. |
+| SI-10 | Information input validation | Guided decoding, Pydantic parsing, SHACL on candidates and claims, OSCAL schema on artifacts, HTML escaping in the UI. |
+| SR-3, SR-4 | Supply chain controls and provenance | AI BOM; provenance columns on every row; source allowlist in NiFi. |
+| PL-8 | Security and privacy architectures | This section and section 8. |
+
+### 16.10 Data governance
+
+| Item | Rule |
+|---|---|
+| Classification labels | Every Iceberg table carries a table property `oag.classification` with one of `public` (upstream standards), `synthetic` (BSR records), `derived` (chunks, embeddings, candidates), `operational` (audit, actions). A real deployment adds `agency-moderate` or `agency-high`. The label is emitted by the DDL generator from a LinkML class annotation. |
+| Retention | `raw.*` 400 days; `oag.*` snapshots 30 days (weekly `expire_snapshots`), tags for eval and demo pinned indefinitely; `ops.audit_event` and `ops.action_*` never expired; Langfuse traces 180 days locally; NiFi provenance 30 days. |
+| Lineage | Locally: provenance columns and `ops.pipeline_run`. On Cloudera: Atlas captures Spark and NiFi lineage automatically; the migration checklist records whether Atlas shows the `oag.*` tables. |
+| Personal data | None in this build. Synthetic actor emails use `example.gov`. A real deployment holds names and emails of ISSOs and owners; those columns are marked `pii: true` in LinkML and the generator emits them into a column-mask list for Ranger. |
+| Trace hygiene | Prompts contain no secrets by construction; a Langfuse mask function redacts anything matching the secret scanner patterns before upload; traces are not exported off the host. |
+| Right to remove | An upstream record withdrawn (a rejected CVE, a removed KEV entry) is never deleted; it is marked with the new status and the change is visible in CQ23. |
+| Source terms | Section 6.2 records the license or terms per source. ATT&CK and CWE and CAPEC terms require notice; the README and the UI footer carry the notices. |
+
+### 16.11 Model, prompt, and supply chain governance
+
+| Item | Rule |
+|---|---|
+| Model card | `docs/security/model-card.md` for the served model: source, revision hash, license, quantization, context limit, known limitations, eval results from this project, and the date last benchmarked. Updated when the model changes. |
+| AI BOM | A CycloneDX 1.7 BOM for the agent that lists the model as a `machine-learning-model` component with a `modelCard` property, the embedding model, the ontology version as a `data` component, and the prompt set. Generated by `make aibom` and stored with the release. (CycloneDX ML-BOM support exists since 1.5; the OWASP AIBOM initiative provides a generator; **Verify** the generator's output against the 1.7 schema.) |
+| Model loading | `safetensors` only; `trust_remote_code` never set; revisions pinned; the Hugging Face cache is read-only to the vLLM container. |
+| Prompt change control | Prompts live in `agent/generation/prompts/` with a version string, are registered in Langfuse, and any change runs `ontology_ci` (renamed in practice to "schema and prompt CI"). A prompt change that lowers any tier's accuracy or raises closed-world false negatives fails. |
+| Project image supply chain | Project images (`agent-api`, `approval-ui`, the NiFi image with Syft and Grype) are built in CI, signed with cosign (v3.1.3 or later, **Verify**), and scanned with the same Syft and Grype pipeline the project runs on the synthetic agency. A KEV finding in a project image fails the build. This is the project applying its own output to itself, and it is a demo moment. |
+| Dependency pinning | `uv.lock` committed; Grype scans the lock file's resolved packages; `pip-audit` as a second opinion. |
+| Red teaming in CI | An automated adversarial pass runs weekly and on every prompt change: NVIDIA garak (0.17, Apache 2.0, **Verify**) against the vLLM endpoint with the injection and leakage probes, and promptfoo (0.123, MIT) red team scenarios over the agent API using the seeded cases in `evals/cases/injection/`. Results go to `docs/evals/redteam-<date>.md`. PyRIT (1.1, MIT) is an alternative if garak's probe set proves insufficient. |
+| Optional guard model | If an input or output classifier is wanted beyond the schema and SHACL controls, `ibm-granite/granite-guardian-4.1-8b` (Apache 2.0, **Verify**) can be served on the same GPU for jailbreak and groundedness checks. Llama Guard 4 is not chosen because of its license terms. This is optional because the schema and critic already constrain output; it becomes relevant if a free-text mode is ever added. |
+| Endpoint hardening | vLLM runs with `--api-key`, behind the LAN only, with `--max-num-seqs` and `--max-model-len` set; no public exposure. On Cloudera, AI Inference sits behind Knox with JWT. |
+
+### 16.12 Separation of duties, human oversight, and incident response
+
+- **Separation of duties.** The actor who requests an action may not approve it. `authorize` enforces this at approval time, and the audit event records both actors. A single-person home lab satisfies this with two synthetic actor tokens; a real deployment maps them to two people.
+- **Human oversight.** Every action is held; every extraction candidate below the auto-publish bar is queued; the approval UI shows evidence, rule trace, and SHACL result. Monthly review of approval rates per approver and of rejected candidates by reason code is a documented operator task.
+- **Kill switch.** Two independent flags in `config/base.yaml`, changeable at runtime through the agent API by an actor with the `ciso` role: `actions.enabled` (stops drafting and approval) and `retrieval.enabled` (stops answering; the API returns a maintenance message). Both changes are audited. A third flag `extraction.auto_publish` stops the extraction loop from publishing anything.
+- **Incident response.** `docs/runbooks/incident.md` covers: suspected injection (disable actions, quarantine the source's documents by setting `trust_level = untrusted` on a branch and publishing, replay affected answers with `tools/replay.py`); suspected poisoning (identify the source version, `rollback_to_snapshot` on affected tables, re-run validation); credential exposure (rotate, revoke, review audit events by actor); model compromise (stop vLLM, verify the checkpoint hash, redeploy).
+- **Feedback channel.** The answer UI has a "report this answer" button that writes an `ops.audit_event` of type `user_report` linked to the trace. This is the end-user feedback mechanism that OMB M-25-21 asks for.
+
+### 16.13 Federal AI governance alignment
+
+| Reference | Status (checked 2026-09-26) | What it means for this system |
+|---|---|---|
+| OMB M-25-21, Accelerating Federal Use of AI through Innovation, Governance, and Public Trust (2025-04-03; replaced M-24-10) | Current. High-impact AI minimum practices were due 2026-04-15. | The system's outputs are drafts that a human approves, and the decisions (patch a system, file a POA&M) are operational, not decisions with legal or material effect on individuals. **Assumption:** it is not high-impact AI under the memo's definition. It still belongs in the agency AI use case inventory, and this section is written so that the high-impact practices (pre-deployment testing, impact assessment, ongoing monitoring, operator training, human oversight, remedies, feedback) are already satisfied if an agency classifies it otherwise. |
+| OMB M-25-22, Driving Efficient Acquisition of AI (2025-04-03) | Current. | Relevant to a Cloudera deployment as an acquisition: model and data rights, vendor lock-in language, and performance monitoring in contracts. The open interfaces in section 8.4 are the technical answer to its lock-in concern. |
+| OMB M-26-04, Increasing Public Trust in AI Through Unbiased AI Principles (2025-12-11) | Current. | Not directly applicable to a vulnerability system; noted for completeness. |
+| EO 14409, Promoting Advanced AI Innovation and Security (2026-06-02) | **Verify** agency-specific obligations. | Adds agency AI cybersecurity obligations; the controls in 16.9 are the mapping point. |
+| NIST AI RMF 1.0 (AI 100-1) and the Generative AI Profile (AI 600-1, 2024-07-26) | Current; RMF revision announced but no new version published. | The four functions map as: Govern (this section, section 25), Map (sections 3, 4, 16.1), Measure (section 17), Manage (sections 16.12, 24). The GenAI profile's risks of confabulation and information integrity are addressed by the open-world design and citations. |
+| NIST SP 800-53 Control Overlays for Securing AI Systems (COSAiS) | Concept paper 2025-08 and a discussion draft 2026-01; no final overlay. **Verify** status. | When published, replace the hand-picked list in 16.9 with the overlay's control set. |
+| NIST SP 800-218A, SSDF profile for generative AI (2024-07-26) | Current. | Development practices in 16.11 (pinned models, provenance, testing) follow it. |
+| NIST IR 8596, Cybersecurity Framework Profile for AI | Preliminary draft 2025-12; **Verify** final. | Track. |
+| CISA and partners, Deploying AI Systems Securely (2024-04-15) and AI Data Security (2025-05-22) | Current. | Data provenance, integrity verification, and access controls on data used to operate the system are sections 16.1, 16.10, and 9.6. |
+| CISA and partners, Careful Adoption of Agentic AI Services (2026-05-01) | Current; **Verify** contents. | The agentic Top 10 mapping in 16.7 and the kill switch in 16.12 are the response. |
+| FedRAMP 20x and AI | 20x is becoming the default path for new Moderate authorizations from Q3 2026; a GenAI significant change notification and an AI self-reporting addendum are being introduced. **Verify** with FedRAMP. | Self-hosted models inherit the hosting platform's boundary. Adding this system to a Cloudera for Government deployment is a significant change to document; the AI BOM and model card are the inputs. |
+
+### 16.14 Security actions added to the build
+
+| ID | Action | Phase |
+|---|---|---|
+| A01 | Critic flags imperative text in `answer_summary` and marks the answer partial. | 4 |
+| A02 | Langfuse mask function for secret patterns; `oag.classification` table property emitted by the DDL generator. | 2 and 4 |
+| A03 | vLLM launch enforces `safetensors` only; `trust_remote_code` never set; read-only model cache. | 4 |
+| A04 | Project images signed with cosign and scanned with Syft and Grype in CI; KEV findings fail the build. | 6 |
+| A05 | AI BOM generated per release; model card maintained. | 6 |
+| A06 | Per-source delta thresholds in `validate_branch` (KEV count may not drop; NVD daily change above 5 percent requires manual publish). | 2 |
+| A07 | Approval UI escapes all model text. | 5 |
+| A08 | Requester and approver must differ; enforced in `authorize`. | 5 |
+| A09 | Documented rule: nothing in a prompt is relied on for security. | 4 |
+| A10 | Role-based predicates applied to vector queries as well as graph queries. | 7 (depends on the Ranger test) |
+| A11 | Per-actor rate limits and daily token quotas at the agent API; shared GPU concurrency pool between the agent and extraction jobs. | 4 |
+| A12 | ATLAS STIX loaded alongside ATT&CK; threat model mapped to ATLAS IDs. | 3 |
+| A13 | Weekly red team pass (garak and promptfoo) with results in `docs/evals/`. | 6 |
+| A14 | Kill switch flags and incident runbook. | 5 |
+| A15 | "Report this answer" feedback event. | 4 |
 
 ## 17. Evaluation
 
@@ -1664,6 +1809,7 @@ oag-lakehouse/
     evals/                      # run reports
     demo/                       # demo scripts and slides source
     decisions/                  # ADRs, one file per decision in section 25
+    security/                   # threat model, atlas-mapping.yaml, model-card.md, aibom output, 800-53 self-mapping
     runbooks/                   # phase runbooks
   tests/                        # unit tests for adapters, cover, critic, generators
 ```
@@ -1680,7 +1826,7 @@ Effort assumes evenings and weekends, about 10 to 12 hours per week. "Days" are 
 | 3. Assets and graph | Synthetic agency, SBOM scans, findings, alignment, PuppyGraph and AGE, template queries. | `sbom_scan` flow; `load_sbom_findings`, `generate_synthetic_agency`, `align_components` (deterministic part); custom PuppyGraph schema generator; schema loaded; AGE export; the queries for every CQ template; adapter parity test. This is the first demoable milestone: CQ06 answered as a graph query. | Every T1, T2, T3 template query returns correct rows on PuppyGraph and AGE for the seeded data; CQ06 and CQ09 shown in the PuppyGraph UI; `ops.attack_version_bridge` resolves at least 95 percent of CTID technique ids to live v19.2 techniques. | 10 days |
 | 4. Agent and serving | vLLM on the 5090, grounding, retrieval, guided generation, critic, Langfuse, agent API. | vLLM launch script and benchmark (FP8 versus AWQ); embeddings; `chunk_documents`, `ground_chunks`, `embed_chunks`; pgvector; LangGraph graph; Langfuse stack; `/ask` endpoint; eval harness with T1 to T4 cases; naive RAG and graph-only baselines. Second demoable milestone: CQ08 and CQ15 answered end to end with citations and an "unknown". | All T1 to T4 cases pass the accuracy thresholds set in `evals/thresholds.yaml` (initial: T1 at 95 percent, T2 at 85 percent, T3 at 85 percent, T4 unknown correctness at 100 percent with zero closed-world false negatives after critic); Langfuse shows a full trace; `tools/replay.py` reproduces an answer. | 15 days |
 | 5. Actions and extraction loop | POA&M, ticket, VEX drafting with approval; extraction candidates from advisories; review queue. | `actions/` module; approval UI; OSCAL validation; OpenVEX fed to Grype; `documents_daily` DAG; extraction templates; review queue; extraction metrics; T5 cases. Third demoable milestone: the 10 minute demo in section 23.1 runs end to end. | CQ20 to CQ22 produce valid artifacts held for approval; approving writes to S3 and git and the finding shows a POA&M on the next publish; the next scan consumes the VEX file; extraction precision on the labeled sample at or above 80 percent for auto-published candidates. | 12 days |
-| 6. Hardening and CI | Ontology regression CI, security items, replay, documentation, demo rehearsal. | `ontology_ci` DAG and GitHub Actions workflow; injection cases; secrets scan; runbooks; demo scripts rehearsed and timed. | A deliberate schema regression (removing a closure declaration) fails CI; injection cases pass; both demos run within time. | 6 days |
+| 6. Hardening and CI | Ontology regression CI, security items, replay, documentation, demo rehearsal. | `ontology_ci` DAG and GitHub Actions workflow; injection cases; secrets scan; runbooks; security actions A04, A05, A13 (signed and scanned project images, AI BOM and model card, red team pass); demo scripts rehearsed and timed. | A deliberate schema regression (removing a closure declaration) fails CI; injection cases pass; both demos run within time. | 6 days |
 | 7. Optional: governance and Kubernetes | Ranger test; k3s migration of the agent tier. | Ranger in Compose with Trino plugin; test results in `docs/decisions/ranger-bypass.md`; Helm charts. | Ranger test A through C recorded with pass or fail; agent API and Langfuse running on k3s against the Compose data plane. | 8 days |
 | 8. Cloudera validation (when access exists) | Run the checklist in section 22 on a real environment. | Completed checklist; `config/cloudera.yaml` filled in; list of code changes if any (target zero). | Every checklist item has a result. | 5 days on site |
 
@@ -1781,6 +1927,7 @@ Do not use OAG when the rules are implicit. Fraud detection, insider threat, and
 | vLLM on sm_120 under WSL2 misbehaves | Medium | High for Phase 4 | Pin vLLM 0.30 with the CUDA 12.9 image variant if the 13.0 image fails; keep a native Linux boot option on the workstation as a fallback; document the working driver and toolkit versions. | Author |
 | Cloudera Data Engineering Iceberg build lacks branch operations | Low to medium | High for the migration story | Checklist item 3; if `fast_forward` is unavailable, the publish step falls back to `MERGE INTO main FROM branch` in a single Spark job, which is a config switch in `jobs/spark/lib/wap.py`, not a code rewrite of the loaders. | Author |
 | Scope creep (more sources, more classes, dashboards, Kafka) | High | High | Competency questions gate the ontology; Phase 1 exit criteria are fixed; the out-of-scope list in section 5.2 is reviewed at every phase exit; new ideas go to section 25 as open questions, not into the current phase. | Author |
+| Security frameworks move (OWASP 2026 edition, COSAiS overlay, FedRAMP 20x AI addendum) | High | Low to medium | Sections 16.6 to 16.13 cite versions and dates; a quarterly review task re-checks each reference and updates the mapping tables; the mapping is a document, not code, so drift costs little. | Author |
 | Extraction loop produces plausible wrong edges | Medium | High | Auto-publish only for authoritative sources at confidence 0.95 or higher; SHACL forbids advisory-derived facts from overwriting NVD or KEV; review queue; precision measured against labels. | Author |
 | Time (evenings and weekends; interview timeline) | High | Medium | Phase order puts the first demo at about day 19 and the OAG demo at about day 34; the 10 minute demo is achievable after Phase 5 but a shorter version (CQ06 in the PuppyGraph UI plus the ontology CI) is available after Phase 3. | Author |
 
@@ -1824,6 +1971,9 @@ The process instructions allowed up to five questions if the author could answer
 | D18 | No Kubernetes in Phase 1 | The prompt requires it; the data plane is what Cloudera replaces. | k3s from the start. |
 | D19 | Graph is read-only; all writes go to Iceberg | Single system of record; PuppyGraph is read-only over Iceberg anyway. | Writing actions into AGE. |
 | D20 | Six synthetic systems with deliberate gaps (missing SBOM, unknown control status) | T4 questions need real gaps in the data, not simulated ones at query time. | Fully populated synthetic data. |
+| D21 | No tools for the model during generation; Cypher and SQL are fixed templates | Removes ASI02, ASI05, and most of ASI07 by construction; the cost is that freeform questions outside the CQ templates get a clarification instead of an ad hoc query. | Letting the model write Cypher (text-to-Cypher): more flexible, but it reopens injection to query execution and cannot be validated by SHACL before it runs. |
+| D22 | Granite Guardian as the optional guard model, not Llama Guard | Apache 2.0 license; covers groundedness and agentic checks; serves on vLLM. | Llama Guard 4 (Llama 4 Community License terms). |
+| D23 | Security mappings kept as documents with cited versions rather than encoded as data | The frameworks change yearly; the mapping is for reviewers and assessors; only the controls themselves are code. | Loading OWASP and 800-53 mappings into the graph: possible later, and ATLAS is loaded because it is STIX. |
 
 ### 25.3 Open questions
 
@@ -1846,6 +1996,9 @@ The process instructions allowed up to five questions if the author could answer
 | Q15 | Should the NVD API key request be made now? | Yes; the form-based process may take days. Action for the author before Phase 2. | 2 |
 | Q16 | What is the exact CPRT deep link format for 800-53 Rev 5.2.0 controls (for the `sp800-53r5` prefix expansion)? | Check the CPRT site; the prefix map can change without affecting identifiers. | 2 |
 | Q17 | Which OpenVEX specification version is current, and does Grype 0.119 accept it? | Check the OpenVEX repository and test with `grype --vex`. | 5 |
+| Q19 | Which ATLAS v2026.09 technique IDs correspond to the threat model rows in 16.8? | Load the STIX bundle in Phase 3 and pick IDs from the loaded data rather than from memory. | 3 |
+| Q20 | Does the agency classify this system as high-impact AI under OMB M-25-21? | An agency CAIO decision; the design already meets the minimum practices either way. | 8 |
+| Q21 | Does the OWASP AIBOM generator emit CycloneDX 1.7 with `modelCard`, or is a hand-written BOM needed? | Try the generator in Phase 6. | 6 |
 | Q18 | Where does the OSCAL 1.2.3 POA&M model place milestones and related findings (inside `poam-items`, inside `risks`, or both)? | Validate the Appendix E draft against the vendored `oscal_poam_schema.json` with the `jsonschema` library at Phase 5 start and correct the generator. | 5 |
 
 ## 26. Glossary
@@ -2342,4 +2495,5 @@ Produced by `poam_create` for CQ20, held in `ops.action_request` with status `pe
 | Every synthetic data record is flagged | Yes. `is_synthetic` and `synthetic_note` on every table (section 9.1); synthetic classes marked in section 6.3; OSCAL props in Appendix E. |
 | Phase 1 is only the storage, catalog, and Spark foundation | Yes. Section 21, Phase 1: Ozone, Polaris, Spark, one table written by Spark and read by Trino. |
 | No em-dashes appear in the document | Checked by `grep` before commit and enforced by a pre-commit hook. |
+| Security and governance mapped to named external frameworks with versions | Yes. Sections 16.6 (OWASP LLM Top 10), 16.7 (OWASP Agentic Top 10), 16.8 (MITRE ATLAS), 16.9 (NIST 800-53 self-mapping), 16.13 (OMB, NIST AI RMF, CISA, FedRAMP). |
 | No "TBD" without a section 25 entry | Checked by `grep`; every unresolved item is a Q-number in section 25.3. |

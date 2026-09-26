@@ -4,7 +4,7 @@ Ontology-Augmented Generation (OAG) reference implementation for federal vulnera
 and compliance management, built on an open source lakehouse and designed to transfer to
 the Cloudera platform by configuration.
 
-The full build-ready specification is in [SPEC.md](SPEC.md). Build progress is tracked in [PLAN.md](PLAN.md).
+The full build-ready specification is in [SPEC.md](SPEC.md). Build progress is tracked in [PLAN.md](PLAN.md). Session handoff notes are in [NEXT.md](NEXT.md).
 
 A study guide for the source material, an Anki deck, an interview crosswalk, and a reading log are in [docs/study/](docs/study/oag-study-guide.md). Gamma.app prompts for six decks are in [docs/decks/](docs/decks/gamma-prompts.md).
 

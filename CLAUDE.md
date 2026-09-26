@@ -5,8 +5,9 @@ compliance management. Lakehouse on Iceberg, LinkML ontology, PuppyGraph, LangGr
 vLLM. Must transfer to Cloudera by config only.
 
 Human spec: SPEC.md (source of truth, long). AI references: docs/ai/ (compact, load per task).
-Tracking: PLAN.md. Read docs/ai/00-index.md first to pick the right reference file. Do not
-load SPEC.md whole; cite it by section when a detail is missing from docs/ai/.
+Tracking: PLAN.md. Handoff: NEXT.md (read first in a new session). Read docs/ai/00-index.md to
+pick the right reference file. Do not load SPEC.md whole; cite it by section when a detail is
+missing from docs/ai/.
 
 ## Hard rules
 

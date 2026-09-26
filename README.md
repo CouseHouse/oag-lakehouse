@@ -6,6 +6,8 @@ the Cloudera platform by configuration.
 
 The full build-ready specification is in [SPEC.md](SPEC.md). Build progress is tracked in [PLAN.md](PLAN.md).
 
+A study guide for the source material, an Anki deck, an interview crosswalk, and a reading log are in [docs/study/](docs/study/oag-study-guide.md). Gamma.app prompts for six decks are in [docs/decks/](docs/decks/gamma-prompts.md).
+
 For AI-assisted development, [CLAUDE.md](CLAUDE.md) holds the hard rules and conventions and
 [docs/ai/](docs/ai/00-index.md) holds compact, task-scoped extracts of the spec (about 8,000
 tokens in total versus about 55,000 for SPEC.md). SPEC.md remains the source of truth; a change

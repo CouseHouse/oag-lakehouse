@@ -1,0 +1,61 @@
+front,back,tags
+"What does OAG stand for and what is its one-sentence definition?","Ontology-Augmented Generation: retrieval and generation operate inside an ontology that predefines classes, relationships, and mandatory constraints (SHACL, OWL). The LLM translates intent and cites; it does not create facts.",oag
+"List the RAG lineage that leads to OAG.","Naive RAG; advanced RAG with rerank; modular RAG; GraphRAG; agentic RAG with planning and critique; OAG.",oag
+"What two things does OAG change relative to earlier RAG stages?","The retrieval unit (ontology-shaped blocks with minimal coverage) and the output contract (typed, validated claims).",oag
+"Name the six core components of OAG.","Constraint-based retrieval; grounding; constrained generation; agent orchestration; extract-align-validate loop; structured fact output.",oag
+"What is the Palantir-style operational pipeline?","Intent to structured query; grounded retrieval of entities (ABox); rule validation; permission checks; action with write-back; pre-write SHACL validation with audit trail.",oag
+"Name the three OAG practices and their representative projects.","Grounded retrieval (OG-RAG); schema-driven extraction (OntoGPT/SPIRES); operational actions (Palantir).",oag
+"List the five criteria for when OAG is worth it.","High decision frequency; cross-system entity alignment; explicit formalizable rules; accountability required; action results feed back.",oag
+"What is the most commonly misidentified OAG candidate?","High business value with unreliable source data and implicit rules. An ontology freezes chaos into a schema.",oag
+"Name the four OAG risks.","Ontology supply chain; ontology evolution and drift; closed-world versus open-world mismatch; vendor lock-in.",oag
+"Ontology (definition)","A formal description of a domain's classes, relationships, and constraints. Not a taxonomy (only hierarchy) and not a storage data model.",concepts
+"TBox","Terminological box: the schema (classes and relationships). In this project: the LinkML schema.",concepts
+"ABox","Assertional box: the individual facts. In this project: the oag.* Iceberg tables.",concepts
+"RDF","W3C triple data model: subject, predicate, object with IRIs. Transient here, only for pySHACL.",concepts
+"OWL","Web Ontology Language: logical semantics and reasoning over RDF. Open-world. Documentation export only here.",concepts
+"SHACL","Shapes Constraint Language (W3C Rec 2017): validates RDF against shapes with severities Violation, Warning, Info. Closed-world in effect. The critic and WAP validator here.",concepts
+"sh:closed","SHACL flag forbidding properties not explicitly allowed on a focus node.",concepts
+"Closed-world assumption","Anything not stated is false. Correct for complete enumerations such as the KEV catalog at a given version.",concepts
+"Open-world assumption","Anything not stated is unknown. Correct for incomplete sources such as exploitation status or control implementation.",concepts
+"Which project predicates are closed-world?","KEV membership per catalog version; POA&M existence; finding existence per scan; containsComponent when SBOM present; hasWeakness when cwe_status assigned.",project
+"Which project predicates are open-world?","exploitation_status; affectsProduct; containsComponent when SBOM partial or missing; ControlImplementation.status without assessment; mitigatesTechnique; mapsToTechnique.",project
+"CURIE","Compact URI: prefix plus local id, expanded via a prefix map. Example cve:CVE-2024-3094.",concepts
+"LinkML","YAML modeling language with generators (JSON Schema, SHACL, OWL, Pydantic, SQL DDL). Single source of truth here.",concepts
+"Which two generators does this project write itself and why?","Iceberg DDL and PuppyGraph schema, because LinkML ships neither.",project
+"Grounding","Mapping a text span to an identifier. Three passes here: regex, lexicon, model choosing only from candidates.",concepts
+"What does SPIRES do with an ungrounded term?","Assigns an AUTO: identifier. This project marks it new_entity and never creates it automatically.",concepts
+"Hyperedge (OG-RAG)","A flattened factual block: a set of ontology relationships from a document, connecting key-value hypernodes.",ograg
+"OG-RAG retrieval algorithm","Embed query; find top-k hypernodes; greedy set cover: add the hyperedge covering the most uncovered nodes until budget or full coverage.",ograg
+"OG-RAG headline results","Recall of accurate facts up 55 percent; response correctness up 40 percent; attribution 30 percent faster; reasoning accuracy up 27 percent (vs RAG, RAPTOR, GraphRAG).",ograg
+"OG-RAG authors and venue","Sharma, Kumar, Li (Microsoft Research); arXiv 2412.15235; EMNLP 2025.",ograg
+"Minimal coverage (in this project)","Greedy set cover over factual blocks built from graph query rows; caps 60 (T1/T2), 120 (T3), 40 (T4); unselected blocks kept in reserve.",project
+"Guided decoding","Restricting token choices so output conforms to a grammar or JSON schema. Cannot emit an invalid enum. Cannot make content true.",concepts
+"How is guided decoding requested on vLLM vs NIM?","vLLM: response_format with json_schema (guided_* removed in 0.12). NIM: extra_body guided_json (sometimes under nvext). Handled in one adapter.",project
+"SPIRES (paper)","Caufield et al., Bioinformatics 2024, arXiv 2304.02711. Recursive prompt interrogation against a LinkML schema; grounding via existing ontologies.",spires
+"SPIRES template","A LinkML schema subset: prefixes, classes, slots, enums, prompt annotations, annotators. Range that is a class recurses.",spires
+"What does OAK's text annotator do by default?","Builds a lexical index from an ontology's labels and synonyms and does string matching (concept recognition).",spires
+"Palantir object type","The schema definition of a real-world entity or event.",palantir
+"Palantir link type","The schema definition of a relationship between two object types.",palantir
+"Palantir action type","The schema definition of a set of edits to objects, properties, and links that a user can take at once.",palantir
+"Palantir submission criteria","Conditions that determine whether an action can be submitted; all must be met.",palantir
+"Palantir writeback","Edits go to a writeback dataset, not the dataset backing the object type.",palantir
+"How do LLM edits reach the Palantir Ontology?","Only through action types (AIP Logic Apply actions); edits can be auto-applied or staged for human review.",palantir
+"Does Palantir call its Ontology a semantic layer?","No. Its docs say the Ontology is not a semantic layer; semantics must be paired with kinetics (actions, functions, security).",palantir
+"Typed claim (this project)","subject, predicate, object, epistemic_status, confidence, evidence (min 1), derived_from_rule.",project
+"Epistemic status values","asserted; negated_closed_world; unknown; insufficient_evidence.",project
+"What does NegatedClaimShape reject?","A claim with epistemic_status negated_closed_world on a predicate declared open-world.",project
+"Write-audit-publish","Write to an Iceberg branch stage_<run_id>; validate (Spark checks, pySHACL, delta thresholds); fast_forward main per table; rollback by snapshot.",project
+"What makes an answer reproducible?","Snapshot ids per table, ontology version, model revision hash, prompt version, rule version on the audit event; a replay tool.",project
+"Why is the graph read-only and derived?","Lakehouse stays the system of record; any engine can rebuild the graph; leaving PuppyGraph is a config change.",project
+"What is the five-tier competency question scheme?","T1 lookup; T2 multi-hop; T3 rule evaluation; T4 open-world (unknown is correct); T5 action-producing.",project
+"Which use case won and with what score?","Federal vulnerability and compliance management, 71 of 75. Healthcare 53, grants 49.",project
+"Why did healthcare program integrity lose?","Implicit adversarial rules: the article's trap. Its one explicit rule (excluded providers unpaid) is a single join.",project
+"Concrete ontology drift examples in this domain","CTID mappings at ATT&CK 16.1 vs ATT&CK 19.2; CAPEC dormant since 2023; NVD risk-based enrichment since April 2026; BOD 26-04 replaced 22-01.",project
+"What is the ATT&CK version bridge?","ops.attack_version_bridge built from STIX revoked-by relations; bridged edges carry confidence 0.9 and bridged=true.",project
+"The four things the model never does here","Has tools during generation; writes Cypher or SQL; writes to a sink without approval; asserts a negative on an open predicate.",project
+"Two-minute 'when not to use OAG'","Implicit rules; unreliable unowned data; one-off analysis; nobody to maintain the ontology. Keep it on open standards so leaving stays cheap.",oag
+"GraphRAG paper","Edge et al., From Local to Global, arXiv 2404.16130 (Microsoft, 2024). Community summaries over an entity graph.",related
+"Agentic RAG survey","Singh et al., arXiv 2501.09136 (2025, v4 2026).",related
+"SHACL 1.2 status","Core is a W3C Working Draft dated 2026-09-18; SHACL 1.0 (2017) remains the Recommendation.",concepts
+"RDF 1.2 status","Candidate Recommendation since 2026-04-07; adds triple terms.",concepts
+"OWL 2 Primer quote on CWA vs OWA","If a fact is not present in a database it is usually considered false (closed-world) whereas in an OWL 2 document it may simply be missing but possibly true (open-world).",concepts

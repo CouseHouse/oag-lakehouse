@@ -7,7 +7,7 @@ Ontology-Augmented Generation for Federal Vulnerability and Compliance Managemen
 | Field | Value |
 |---|---|
 | Document | SPEC.md |
-| Version | 0.2.2 |
+| Version | 0.2.3 |
 | Date | 2026-09-26 |
 | Status | Draft for build. Not yet reviewed by a second person. |
 | Owner | Kyle Couse |
@@ -22,6 +22,7 @@ Change log
 | 0.2.0 | 2026-09-26 | Kyle Couse (drafted with Claude Fable 5.1) | Section 16 extended with OWASP LLM and Agentic Top 10 mappings, MITRE ATLAS, the system's own 800-53 controls, data, model and supply chain governance, separation of duties, incident response, and federal AI governance alignment. Security actions A01 to A15 added to milestones. |
 | 0.2.1 | 2026-09-26 | Kyle Couse (drafted with Claude Fable 5.1) | D24: the whole local stack runs in WSL2 on the workstation; the Proxmox VM is dropped from the baseline. Assumption 25.1.1 replaced with measured workstation specs. Sections 8.2 and 19.1 updated. |
 | 0.2.2 | 2026-09-28 | Kyle Couse (drafted with Claude Fable 5.1) | Section 11.2: OntoGPT 1.2.0 source evaluated; the assumption that OntoGPT is used as a library is replaced with a finding and a template compatibility rule. |
+| 0.2.3 | 2026-09-28 | Kyle Couse | Assumptions 25.1.2 to 25.1.9 confirmed by the owner. Security actions A04, A05, A13 stay in Phase 6. |
 
 Conventions used in this document:
 
@@ -1934,7 +1935,7 @@ Do not use OAG when the rules are implicit. Fraud detection, insider threat, and
 
 ### 25.1 Assumptions made because no questions could be asked
 
-The process instructions allowed up to five questions if the author could answer. This document was produced without that opportunity, so the following assumptions stand until changed:
+The process instructions allowed up to five questions if the author could answer. This document was produced without that opportunity. The owner confirmed assumptions 2 to 9 on 2026-09-28; assumption 1 was replaced by D24. They stand until changed by an ADR:
 
 1. Replaced by D24 on 2026-09-26. The whole local stack runs in WSL2 on the workstation, which was measured at: Intel i9-14900K (24 cores, 32 threads), 64 GB DDR5, RTX 5090 32 GB, Windows 11 Pro 26200, Docker Desktop installed, WSL2 kernel 5.15, a 1 TB WSL2 virtual disk on a 3.7 TB NVMe with about 740 GB free. The `.wslconfig` limit must be raised from 16 GB and 8 processors to 48 GB and 16 processors before Phase 4. Section 19 minimums still apply and the Compose limits are parameterized.
 2. Spark 3.5 and Airflow 2.11 are used locally for parity with CDE 1.26, rather than Spark 4 and Airflow 3, even though the baseline table in the prompt did not pin versions. This is a justified deviation because it removes a migration variable.

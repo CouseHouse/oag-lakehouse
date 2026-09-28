@@ -19,6 +19,7 @@ Effort assumes evenings and weekends, about 10 to 12 hours per week. A "day" is 
 
 Progress log (newest first):
 
+- 2026-09-28: All pre-Phase 0 decisions closed. Assumptions confirmed, A04/A05/A13 stay in Phase 6, Claude scaffolds Phase 0. OntoGPT evaluated (SPEC.md 11.2). SPEC.md 0.2.3.
 - 2026-09-26: D24 recorded: whole local stack in WSL2 on the workstation (64 GB, i9-14900K, RTX 5090). SPEC.md 0.2.1.
 - 2026-09-26: NVD API key received (Q15 closed). `.env.example` created.
 - 2026-09-26: SPEC.md 0.2.0 committed. Plan created. Nothing built yet.
@@ -26,9 +27,10 @@ Progress log (newest first):
 ## Before Phase 0
 
 - [x] Request an NVD API key (https://nvd.nist.gov/developers/request-an-api-key). Received 2026-09-26. Stored in local `.env` as `NVD_API_KEY`, never committed.
-- [ ] Read SPEC.md section 25.1 and confirm or change the nine assumptions.
+- [x] Read SPEC.md section 25.1 and confirm or change the nine assumptions. Confirmed 2026-09-28 (assumption 1 replaced by D24).
 - [x] Decide where Phase 1 runs. Decided 2026-09-26 (D24): the whole stack runs in WSL2 on the workstation; no Proxmox VM.
-- [ ] Decide whether to pull A04, A05, A13 (image signing, AI BOM, red team pass) forward from Phase 6 to Phase 4.
+- [x] Decide whether to pull A04, A05, A13 (image signing, AI BOM, red team pass) forward from Phase 6 to Phase 4. Decided 2026-09-28: they stay in Phase 6.
+- [x] Decide who scaffolds Phase 0. Decided 2026-09-28: Claude scaffolds it; the owner reviews.
 
 ## Phase 0: repository skeleton (about 2 days)
 

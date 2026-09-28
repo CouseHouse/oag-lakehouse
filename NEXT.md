@@ -40,16 +40,13 @@ Nothing has been built. Every file so far is documentation, configuration for Cl
 11. **All verification dates are 2026-09-26.** Versions in SPEC.md section 19 and docs/ai/infra.md will drift; re-check tags at the start of each phase (PLAN.md has Q08 and Q09 for the two most likely to bite).
 12. **Decided (D24, 2026-09-26): everything runs in WSL2 on the workstation.** Measured: i9-14900K, 64 GB, RTX 5090 32 GB, Docker Desktop installed but WSL integration for the Ubuntu distro was not yet enabled, `.wslconfig` capped at 16 GB and 8 processors. The user must raise `.wslconfig` (24 GB for Phases 1 to 3, 48 GB from Phase 4) and enable Docker Desktop WSL integration before Phase 1. Claude must not edit `.wslconfig` or run `wsl --shutdown`: both kill the session.
 
-## Open decisions for the user (not yet answered)
+## Open decisions for the user
 
-- Confirm or change the eight remaining assumptions in SPEC.md section 25.1 (Spark and Airflow majors, model, synthetic agency size, Langfuse v4, file sinks, unsecured Ozone, BGE-M3, no Kafka). Assumption 1 was settled by D24.
-- Whether to pull security actions A04, A05, A13 (image signing, AI BOM, red team pass) forward from Phase 6 to Phase 4.
-- Whether Claude scaffolds Phase 0 or the user builds it by hand for learning value.
+None. All four pre-Phase 0 decisions were answered on 2026-09-28: assumptions 2 to 9 confirmed, D24 for the host, A04/A05/A13 stay in Phase 6, Claude scaffolds Phase 0 and the owner reviews.
 
 ## Next steps, in order
 
-1. Ask the user the three open decisions above, or proceed on the recorded recommendations if told to.
-2. Phase 0 (PLAN.md): directory tree from SPEC.md section 20, `pyproject.toml` with `uv`, `agent/config.py` loader that merges `config/base.yaml` with `config/<env>.yaml` and validates required keys, `Makefile`, `.pre-commit-config.yaml` (ruff, secret scan, em-dash check), one test, GitHub Actions running lint and pytest. Exit: `make lint` passes and `python -m agent.config --env local` prints a redacted config.
+1. Phase 0 (PLAN.md): directory tree from SPEC.md section 20, `pyproject.toml` with `uv`, `agent/config.py` loader that merges `config/base.yaml` with `config/<env>.yaml` and validates required keys, `Makefile`, `.pre-commit-config.yaml` (ruff, secret scan, em-dash check), one test, GitHub Actions running lint and pytest. Exit: `make lint` passes and `python -m agent.config --env local` prints a redacted config.
 3. Phase 1: Compose `foundation` profile (Ozone 2.2.1, Polaris 1.7.0, Spark 3.5.x, Trino 483), Polaris catalog on Ozone with `--no-sts` and path-style access, `tools/smoke_phase1.py`. Resolve Q08 first (Spark image tag and Iceberg runtime Scala variant). Exit criteria in PLAN.md.
 4. Update PLAN.md status table and progress log at the end of every session. Check off items as they land.
 

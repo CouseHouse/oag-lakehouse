@@ -18,3 +18,6 @@ data/
 .vscode/
 .idea/
 .DS_Store
+
+# Local, per-machine notes and runbooks (never committed)
+local/

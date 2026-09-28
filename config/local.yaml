@@ -1,0 +1,58 @@
+# OAG_ENV=local. Everything runs in WSL2 on the workstation through Docker Desktop (D24).
+# Secrets are environment variable names; values come from the local env file, never from here.
+storage:
+  endpoint_url: http://localhost:9878
+  bucket: oag-warehouse
+  region: us-east-1
+  path_style: true
+  access_key_env: OAG_S3_ACCESS_KEY
+  secret_key_env: OAG_S3_SECRET_KEY
+
+catalog:
+  uri: http://localhost:8181/api/catalog
+  warehouse: oag-warehouse
+  auth:
+    type: oauth2
+    client_id_env: POLARIS_CLIENT_ID
+    client_secret_env: POLARIS_CLIENT_SECRET
+
+graph:
+  uri: bolt://localhost:7687
+  user: puppygraph
+  password_env: PUPPYGRAPH_PASSWORD
+  pg_dsn: "postgresql://oag:${AGE_PASSWORD}@localhost:5433/oag"
+
+vector:
+  dsn: "postgresql://oag:${PGVECTOR_PASSWORD}@localhost:5432/oag"
+
+model:
+  base_url: http://localhost:8000/v1
+  name: oag-primary
+  api_key_env: VLLM_API_KEY
+
+embedding:
+  base_url: http://localhost:8001/v1
+  model: BAAI/bge-m3
+
+sql:
+  host: localhost
+  port: 8443
+  catalog: oag
+  auth:
+    type: password
+    user: oag-agent
+    password_env: TRINO_PASSWORD
+
+trace:
+  host: http://localhost:3000
+  public_key_env: LANGFUSE_PUBLIC_KEY
+  secret_key_env: LANGFUSE_SECRET_KEY
+
+actions:
+  bucket: oag-actions
+  git_repo: actions
+
+airflow:
+  spark_backend: local
+  connections:
+    spark: spark://localhost:7077

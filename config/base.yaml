@@ -1,0 +1,39 @@
+# Environment-independent values. Overlaid by config/<env>.yaml selected with OAG_ENV.
+# No endpoint, bucket, or secret belongs here.
+ontology_version: "0.1.0"
+prompt_version: "0.1.0"
+rule_version: "0.1.0"
+temperature: 0.0
+token_budget: 12000
+gpu_price_per_token: 0.0
+
+model:
+  structured_output_mode: response_format
+  nim_nvext_wrapper: false
+  max_context: 65536
+  hosted:
+    enabled: false
+
+embedding:
+  dim: 1024
+
+vector:
+  table: chunk_embedding
+  dim: 1024
+
+graph:
+  dialect: puppygraph
+
+catalog:
+  namespace_prefix: ""
+
+actions:
+  enabled: true
+  prefix: actions/
+  approval_roles: [isso, system_owner]
+
+retrieval:
+  enabled: true
+
+extraction:
+  auto_publish: false

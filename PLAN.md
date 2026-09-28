@@ -11,14 +11,15 @@ Effort assumes evenings and weekends, about 10 to 12 hours per week. A "day" is 
 
 | Field | Value |
 |---|---|
-| Current phase | 0 |
+| Current phase | 0 complete; 1 not started |
 | Started | 2026-09-26 |
-| Last updated | 2026-09-26 |
-| Next milestone | Phase 0 exit: `make lint` passes and the config loader prints a redacted config |
+| Last updated | 2026-09-28 |
+| Next milestone | Phase 1: resolve Q08, then the Compose `foundation` profile |
 | Blockers | None |
 
 Progress log (newest first):
 
+- 2026-09-28: Phase 0 scaffolded. Directory tree, pyproject with uv, config loader with `${VAR}` expansion and redaction, Makefile, pre-commit, lint tools (em-dash, hosted import), 11 tests, GitHub Actions. ADR-0024 and ADR-0025.
 - 2026-09-28: All pre-Phase 0 decisions closed. Assumptions confirmed, A04/A05/A13 stay in Phase 6, Claude scaffolds Phase 0. OntoGPT evaluated (SPEC.md 11.2). SPEC.md 0.2.3.
 - 2026-09-26: D24 recorded: whole local stack in WSL2 on the workstation (64 GB, i9-14900K, RTX 5090). SPEC.md 0.2.1.
 - 2026-09-26: NVD API key received (Q15 closed). `.env.example` created.
@@ -36,21 +37,21 @@ Progress log (newest first):
 
 Goal: the directory tree, config loading, and quality gates exist before any service runs.
 
-- [ ] Create the directory tree from SPEC.md section 20 with a README stub in each top-level directory
-- [ ] `pyproject.toml` with `uv`; extras `agent`, `jobs`, `dags`, `evals`, `tools`
-- [ ] `config/base.yaml`, `config/local.yaml`, `config/cloudera.yaml` with every key named in section 8.4, values pointing at environment variables for secrets
-- [ ] `agent/config.py`: merge base and env YAML, resolve env vars, validate required keys, print redacted
+- [x] Create the directory tree from SPEC.md section 20 with a README stub in each top-level directory
+- [x] `pyproject.toml` with `uv`; extras `agent`, `jobs`, `dags`, `evals`, `tools` (empty until each phase adds its SDKs)
+- [x] `config/base.yaml`, `config/local.yaml`, `config/cloudera.yaml` with every key named in section 8.4, values pointing at environment variables for secrets
+- [x] `agent/config.py`: merge base and env YAML, resolve env vars, validate required keys, print redacted
 - [x] `.env.example` listing every secret and endpoint name with no values (created 2026-09-26; extend as services land)
-- [ ] `.pre-commit-config.yaml`: ruff, secret scan, em-dash check for `*.md`
-- [ ] `Makefile` targets: `lint`, `generate`, `up-phase1`, `up`, `eval`, `replay` (later targets can be stubs that fail with a message)
-- [ ] `tests/` with one test for the config loader
-- [ ] GitHub Actions workflow running `make lint` and `pytest`
-- [ ] CI check that docs/ai/ files changed whenever SPEC.md changed in the same commit (warning only)
+- [x] `.pre-commit-config.yaml`: ruff, secret scan (detect-secrets with `.secrets.baseline`), em-dash check for `*.md`, hosted-import check
+- [x] `Makefile` targets: `lint`, `generate`, `up-phase1`, `up`, `eval`, `replay` (later targets can be stubs that fail with a message)
+- [x] `tests/` with one test for the config loader (seven, plus two for the lint tools)
+- [x] GitHub Actions workflow running `make lint` and `pytest`
+- [x] CI check that docs/ai/ files changed whenever SPEC.md changed in the same commit (warning only)
 
 Exit criteria:
 
-- [ ] `make lint` passes
-- [ ] `python -m agent.config --env local` prints a redacted config
+- [x] `make lint` passes (2026-09-28)
+- [x] `python -m agent.config --env local` prints a redacted config (2026-09-28)
 - [ ] CI is green on `main`
 
 ## Phase 1: foundation (about 5 days)

@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --all-extras
+      - run: make lint
+      - run: make test
+
+  docs-sync:
+    # Warning only: SPEC.md changed but no docs/ai/ file did in the same range.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check docs/ai/ moved with SPEC.md
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base" 2>/dev/null; then base=$(git rev-parse HEAD~1); fi
+          changed=$(git diff --name-only "$base" HEAD)
+          if echo "$changed" | grep -qx 'SPEC.md' && ! echo "$changed" | grep -q '^docs/ai/'; then
+            echo "::warning file=SPEC.md::SPEC.md changed without a docs/ai/ update in the same range"
+          fi

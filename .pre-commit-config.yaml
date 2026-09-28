@@ -1,0 +1,24 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.9
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+  - repo: local
+    hooks:
+      - id: no-em-dash
+        name: no em-dashes in Markdown (CLAUDE.md rule 10)
+        entry: python tools/check_emdash.py
+        language: system
+        types: [markdown]
+      - id: no-hosted-import
+        name: hosted adapter only under evals/ (CLAUDE.md rule 1)
+        entry: python tools/check_hosted_import.py
+        language: system
+        types: [python]

@@ -1,0 +1,58 @@
+# OAG_ENV=cloudera. Placeholders for the transfer (SPEC.md section 22). Same keys as local.yaml;
+# only values and adapter selections differ. Fill in at Phase 8 against a real environment.
+storage:
+  endpoint_url: https://ozone-s3g.example.cloudera.site
+  bucket: oag-warehouse
+  region: us-east-1
+  path_style: true
+  access_key_env: OAG_S3_ACCESS_KEY
+  secret_key_env: OAG_S3_SECRET_KEY
+
+catalog:
+  uri: https://knox.example.cloudera.site/iceberg-rest
+  warehouse: oag-warehouse
+  auth:
+    type: bearer
+    token_env: CDP_ACCESS_TOKEN
+
+graph:
+  uri: bolt://puppygraph.example.cloudera.site:7687
+  user: puppygraph
+  password_env: PUPPYGRAPH_PASSWORD
+
+vector:
+  dsn: "postgresql://oag:${PGVECTOR_PASSWORD}@postgres.example.cloudera.site:5432/oag"
+
+model:
+  base_url: https://cai-inference.example.cloudera.site/v1
+  name: oag-primary
+  api_key_env: CAI_INFERENCE_TOKEN
+  structured_output_mode: guided_json
+  nim_nvext_wrapper: false
+
+embedding:
+  base_url: https://cai-inference.example.cloudera.site/embeddings/v1
+  model: bge-m3
+
+sql:
+  host: cdw-trino.example.cloudera.site
+  port: 443
+  catalog: oag
+  auth:
+    type: password
+    user: oag-agent
+    password_env: TRINO_PASSWORD
+
+trace:
+  host: https://langfuse.example.cloudera.site
+  public_key_env: LANGFUSE_PUBLIC_KEY
+  secret_key_env: LANGFUSE_SECRET_KEY
+
+actions:
+  bucket: oag-actions
+  git_repo: actions
+
+airflow:
+  spark_backend: cde
+  connections:
+    cde: https://cde.example.cloudera.site

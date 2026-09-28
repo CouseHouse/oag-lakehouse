@@ -114,6 +114,22 @@ for a human approver who is not the requester.
 | Model serving | vLLM on RTX 5090 | Cloudera AI Inference (NIM) |
 | Agent | LangGraph, LinkML, pySHACL, Langfuse | AI Workbench |
 
+## Getting started
+
+Python 3.12 and [uv](https://docs.astral.sh/uv/). Copy `.env.example` to a local env file and
+fill in values as services land; the YAML config names variables, never values.
+
+```
+uv sync --all-extras
+make lint
+make test
+uv run python -m agent.config --env local
+uv run pre-commit install
+```
+
+`OAG_ENV=local|cloudera` selects `config/<env>.yaml` over `config/base.yaml`. The last command
+prints the resolved config with expanded secrets redacted and lists any unset variables.
+
 ## Status
 
 Specification drafted 2026-09-26. Phase 1 (Ozone, Polaris, Spark, one Iceberg table

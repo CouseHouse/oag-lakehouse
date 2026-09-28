@@ -4,13 +4,13 @@ Read this first after clearing context. Then CLAUDE.md (loaded automatically), t
 for the current phase, then the one or two docs/ai/ files the task needs. Do not load SPEC.md
 whole.
 
-Last updated: 2026-09-26, end of the first session.
+Last updated: 2026-09-28, end of the second session.
 
 ## State of the repository
 
 Repository: https://github.com/CouseHouse/oag-lakehouse (private). Local: /home/butters/projects/oag_project. Branch main, clean, pushed.
 
-Nothing has been built. Every file so far is documentation, configuration for Claude Code, or a template. Phase 0 (repository skeleton) has not started.
+Phase 0 (repository skeleton) is built: directory tree, `pyproject.toml` with uv, config loader, Makefile, pre-commit, lint tools, tests, GitHub Actions. No service runs yet. Phase 1 has not started.
 
 | File | Purpose | Status |
 |---|---|---|
@@ -21,7 +21,11 @@ Nothing has been built. Every file so far is documentation, configuration for Cl
 | docs/study/ | Study guide for the source article and primary sources, Anki CSV (60 cards), interview crosswalk, reading log. | Complete. |
 | docs/decks/gamma-prompts.md | Six Gamma.app deck prompts with card outlines. | Complete. |
 | README.md | Project overview, OAG source summary, security summary, stack table, links. | Complete. |
-| .env.example | Every secret and endpoint variable name, no values. | Complete. Extend as services land. |
+| .env.example | Every secret and endpoint variable name, no values. | Complete. A test fails if a config YAML references a variable not listed here. |
+| pyproject.toml, Makefile, .pre-commit-config.yaml, .github/workflows/ci.yml | Toolchain and gates. `uv sync --all-extras` then `make lint` and `make test`. | Live. `make generate`, `up-phase1`, `up`, `eval`, `replay` are stubs that exit 1 with a message. |
+| config/*.yaml, agent/config.py | Base plus env overlay, `${VAR}` expansion from the environment, Pydantic validation of required keys, redacted print. `OAG_CONFIG_DIR` overrides the directory. | Live. Keys follow SPEC.md 8.4. |
+| tools/check_emdash.py, tools/check_hosted_import.py | Hard rules 10 and 1 as lint checks; run by `make lint`, pre-commit, and tests. | Live. |
+| docs/decisions/ | ADR index plus ADR-0024 (WSL2 host) and ADR-0025 (project extractor, not OntoGPT). ADRs for D01 to D23 are a Phase 6 item. | Started. |
 | .claude/settings.json and .claude/hooks/block-env-read.sh | Read deny rules and a PreToolUse hook. | Live and tested. |
 | Memory (outside repo) | ~/.claude/projects/-home-butters-projects-oag-project/memory/ holds a user profile and a project summary. | Current. |
 
@@ -46,9 +50,9 @@ None. All four pre-Phase 0 decisions were answered on 2026-09-28: assumptions 2 
 
 ## Next steps, in order
 
-1. Phase 0 (PLAN.md): directory tree from SPEC.md section 20, `pyproject.toml` with `uv`, `agent/config.py` loader that merges `config/base.yaml` with `config/<env>.yaml` and validates required keys, `Makefile`, `.pre-commit-config.yaml` (ruff, secret scan, em-dash check), one test, GitHub Actions running lint and pytest. Exit: `make lint` passes and `python -m agent.config --env local` prints a redacted config.
-3. Phase 1: Compose `foundation` profile (Ozone 2.2.1, Polaris 1.7.0, Spark 3.5.x, Trino 483), Polaris catalog on Ozone with `--no-sts` and path-style access, `tools/smoke_phase1.py`. Resolve Q08 first (Spark image tag and Iceberg runtime Scala variant). Exit criteria in PLAN.md.
-4. Update PLAN.md status table and progress log at the end of every session. Check off items as they land.
+1. Confirm CI is green on `main` (the last Phase 0 exit criterion) and check the box in PLAN.md.
+2. Phase 1: Compose `foundation` profile (Ozone 2.2.1, Polaris 1.7.0, Spark 3.5.x, Trino 483), Polaris catalog on Ozone with `--no-sts` and path-style access, `tools/smoke_phase1.py`. Resolve Q08 first (Spark image tag and Iceberg runtime Scala variant). Exit criteria in PLAN.md.
+3. Update PLAN.md status table and progress log at the end of every session. Check off items as they land.
 
 ## Conventions for the next session
 

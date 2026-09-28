@@ -1,0 +1,48 @@
+[project]
+name = "oag-lakehouse"
+version = "0.0.1"
+description = "Ontology-Augmented Generation reference implementation for federal vulnerability and compliance management"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "Apache-2.0"
+dependencies = [
+  "pydantic>=2.7",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Extras are filled in as phases land. Keep vendor SDKs in the extra that owns the adapter.
+agent = []
+jobs = []
+dags = []
+evals = []
+tools = []
+
+[dependency-groups]
+dev = [
+  "ruff>=0.16",
+  "pytest>=8.2",
+  "detect-secrets>=1.5",
+  "pre-commit>=3.7",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["generated", "actions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "ANN", "N", "S"]
+ignore = ["ANN401"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "ANN"]
+"tools/**" = ["S603", "S607"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

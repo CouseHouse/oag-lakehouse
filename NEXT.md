@@ -38,18 +38,17 @@ Nothing has been built. Every file so far is documentation, configuration for Cl
 9. **The primary model is Ministral 3 14B Instruct (official FP8).** Fallback Mistral Small 3.2 24B FP8 for batch only. A community report showed poor FP8 throughput on the RTX 5090 under WSL2; benchmark FP8 against AWQ before committing (Q07).
 10. **Palantir's own docs reject the phrase "semantic layer"** for its Ontology. When describing this project, say "data model plus permitted actions" rather than "semantic layer".
 11. **All verification dates are 2026-09-26.** Versions in SPEC.md section 19 and docs/ai/infra.md will drift; re-check tags at the start of each phase (PLAN.md has Q08 and Q09 for the two most likely to bite).
-12. **The user's Windows workstation has the RTX 5090; the Proxmox VM was in the original prompt but is optional.** Recommendation given: run Phase 1 in WSL2 on the workstation and move the data plane to the VM at Phase 4 when vLLM and Langfuse compete for memory.
+12. **Decided (D24, 2026-09-26): everything runs in WSL2 on the workstation.** Measured: i9-14900K, 64 GB, RTX 5090 32 GB, Docker Desktop installed but WSL integration for the Ubuntu distro was not yet enabled, `.wslconfig` capped at 16 GB and 8 processors. The user must raise `.wslconfig` (24 GB for Phases 1 to 3, 48 GB from Phase 4) and enable Docker Desktop WSL integration before Phase 1. Claude must not edit `.wslconfig` or run `wsl --shutdown`: both kill the session.
 
 ## Open decisions for the user (not yet answered)
 
 - Confirm or change the nine assumptions in SPEC.md section 25.1 (VM sizing, Spark and Airflow majors, model, synthetic agency size, Langfuse v4, file sinks, unsecured Ozone, BGE-M3, no Kafka, not high-impact AI under OMB M-25-21).
-- Where Phase 1 runs: WSL2 on the workstation or the Proxmox VM.
 - Whether to pull security actions A04, A05, A13 (image signing, AI BOM, red team pass) forward from Phase 6 to Phase 4.
 - Whether Claude scaffolds Phase 0 or the user builds it by hand for learning value.
 
 ## Next steps, in order
 
-1. Ask the user the four open decisions above, or proceed on the recorded recommendations if told to.
+1. Ask the user the three open decisions above, or proceed on the recorded recommendations if told to.
 2. Phase 0 (PLAN.md): directory tree from SPEC.md section 20, `pyproject.toml` with `uv`, `agent/config.py` loader that merges `config/base.yaml` with `config/<env>.yaml` and validates required keys, `Makefile`, `.pre-commit-config.yaml` (ruff, secret scan, em-dash check), one test, GitHub Actions running lint and pytest. Exit: `make lint` passes and `python -m agent.config --env local` prints a redacted config.
 3. Phase 1: Compose `foundation` profile (Ozone 2.2.1, Polaris 1.7.0, Spark 3.5.x, Trino 483), Polaris catalog on Ozone with `--no-sts` and path-style access, `tools/smoke_phase1.py`. Resolve Q08 first (Spark image tag and Iceberg runtime Scala variant). Exit criteria in PLAN.md.
 4. Update PLAN.md status table and progress log at the end of every session. Check off items as they land.

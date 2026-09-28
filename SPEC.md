@@ -7,7 +7,7 @@ Ontology-Augmented Generation for Federal Vulnerability and Compliance Managemen
 | Field | Value |
 |---|---|
 | Document | SPEC.md |
-| Version | 0.2.0 |
+| Version | 0.2.1 |
 | Date | 2026-09-26 |
 | Status | Draft for build. Not yet reviewed by a second person. |
 | Owner | Kyle Couse |
@@ -20,6 +20,7 @@ Change log
 |---|---|---|---|
 | 0.1.0 | 2026-09-26 | Kyle Couse (drafted with Claude Fable 5.1) | Initial build-ready draft. Use case selected, ontology scoped, pipelines and milestones defined. |
 | 0.2.0 | 2026-09-26 | Kyle Couse (drafted with Claude Fable 5.1) | Section 16 extended with OWASP LLM and Agentic Top 10 mappings, MITRE ATLAS, the system's own 800-53 controls, data, model and supply chain governance, separation of duties, incident response, and federal AI governance alignment. Security actions A01 to A15 added to milestones. |
+| 0.2.1 | 2026-09-26 | Kyle Couse (drafted with Claude Fable 5.1) | D24: the whole local stack runs in WSL2 on the workstation; the Proxmox VM is dropped from the baseline. Assumption 25.1.1 replaced with measured workstation specs. Sections 8.2 and 19.1 updated. |
 
 Conventions used in this document:
 
@@ -582,15 +583,11 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-  subgraph WS[Windows 11 workstation, RTX 5090 32 GB]
-    subgraph WSL2[WSL2 Ubuntu, CUDA]
-      VLLM[vLLM OpenAI API :8000]
+  subgraph WS[Windows 11 workstation: i9-14900K, 64 GB, RTX 5090 32 GB]
+    subgraph WSL2[WSL2 Ubuntu, CUDA, Docker Desktop engine]
+      VLLM[vLLM OpenAI API :8000, GPU passthrough]
       DEV[VS Code, uv, LinkML tooling, agent dev loop]
-    end
-  end
-
-  subgraph PVE[Proxmox VE host]
-    subgraph VM[Linux VM: Docker Compose data plane]
+    subgraph VM[Docker Compose data plane, same Docker engine]
       OZ[Ozone: SCM, OM, DataNode, S3 gateway :9878, Recon :9888]
       POL[Polaris :8181]
       SPK[Spark standalone: master :7077, UI :8080, worker]
@@ -603,15 +600,16 @@ flowchart TB
       AGENT[Agent API FastAPI :8090 and approval UI]
       RANGER[Ranger admin :6080, optional phase]
     end
+    end
   end
 
   subgraph K8S[Existing Kubernetes lab, optional later]
     K3S[k3s migration target for agent and serving tier]
   end
 
-  DEV -- S3, REST, Bolt, SQL over LAN --> VM
-  AGENT -- OpenAI API over LAN --> VLLM
-  SPK -- OpenAI API over LAN --> VLLM
+  DEV -- S3, REST, Bolt, SQL on localhost --> VM
+  AGENT -- OpenAI API on the Compose network --> VLLM
+  SPK -- OpenAI API on the Compose network --> VLLM
   LF -- S3 events and media --> OZ
   VM -. phase 6 .-> K3S
 ```
@@ -1600,7 +1598,7 @@ Spark jobs that call the model (`ground_chunks`, `embed_chunks`, `extract_candid
 
 ### 19.1 Docker Compose service list
 
-Versions were checked on 2026-09-26 and are marked "verify current" because they will move. Pin them in `infra/local/.env` so that one edit updates the stack. Resource minimums are for the Proxmox VM.
+Versions were checked on 2026-09-26 and are marked "verify current" because they will move. Pin them in `infra/local/.env` so that one edit updates the stack. Resource minimums apply to the WSL2 virtual machine that hosts Docker Desktop (D24); raise `memory` and `processors` in `.wslconfig` to cover the phase being run, leaving at least 16 GB for Windows.
 
 | Service | Image (verify current) | Ports (host) | Volumes | Min vCPU | Min RAM | Rec RAM | Disk | Startup order |
 |---|---|---|---|---|---|---|---|---|
@@ -1937,7 +1935,7 @@ Do not use OAG when the rules are implicit. Fraud detection, insider threat, and
 
 The process instructions allowed up to five questions if the author could answer. This document was produced without that opportunity, so the following assumptions stand until changed:
 
-1. The VM sizing is 16 vCPU, 96 GB RAM, 1 TB NVMe. The author said sizing would be supplied; section 19 gives minimums and a recommendation and the Compose limits are parameterized.
+1. Replaced by D24 on 2026-09-26. The whole local stack runs in WSL2 on the workstation, which was measured at: Intel i9-14900K (24 cores, 32 threads), 64 GB DDR5, RTX 5090 32 GB, Windows 11 Pro 26200, Docker Desktop installed, WSL2 kernel 5.15, a 1 TB WSL2 virtual disk on a 3.7 TB NVMe with about 740 GB free. The `.wslconfig` limit must be raised from 16 GB and 8 processors to 48 GB and 16 processors before Phase 4. Section 19 minimums still apply and the Compose limits are parameterized.
 2. Spark 3.5 and Airflow 2.11 are used locally for parity with CDE 1.26, rather than Spark 4 and Airflow 3, even though the baseline table in the prompt did not pin versions. This is a justified deviation because it removes a migration variable.
 3. The primary model is Ministral 3 14B (FP8), a Mistral open-weight model newer than Mistral Small 3.x, because it fits with headroom; Mistral Small 3.2 24B is the fallback. The prompt preferred Mistral and this respects it.
 4. The fictional agency has six systems and 29 images; the SLA policy in CQ12 is invented and flagged.
@@ -1974,6 +1972,7 @@ The process instructions allowed up to five questions if the author could answer
 | D21 | No tools for the model during generation; Cypher and SQL are fixed templates | Removes ASI02, ASI05, and most of ASI07 by construction; the cost is that freeform questions outside the CQ templates get a clarification instead of an ad hoc query. | Letting the model write Cypher (text-to-Cypher): more flexible, but it reopens injection to query execution and cannot be validated by SHACL before it runs. |
 | D22 | Granite Guardian as the optional guard model, not Llama Guard | Apache 2.0 license; covers groundedness and agentic checks; serves on vLLM. | Llama Guard 4 (Llama 4 Community License terms). |
 | D23 | Security mappings kept as documents with cited versions rather than encoded as data | The frameworks change yearly; the mapping is for reviewers and assessors; only the controls themselves are code. | Loading OWASP and 800-53 mappings into the graph: possible later, and ATLAS is loaded because it is STIX. |
+| D24 | Whole local stack (data plane, vLLM, agent) in WSL2 on the workstation; no Proxmox VM | Decided 2026-09-26. Every service is a Docker container either way; the VM only chose which kernel hosts the Docker daemon. The workstation has 64 GB RAM, 24 cores, and about 740 GB free NVMe, which covers the 48 GB full-stack minimum in section 19 with 16 GB left for Windows. One host removes LAN networking, mirrored-mode port forwarding, and a second machine to keep patched. Every endpoint is config, so moving the data plane out later is a `config/local.yaml` change. | Proxmox VM (supported by Proxmox, clean snapshots, but a second kernel's RAM and cross-host networking for no design benefit); Docker inside a Proxmox LXC with nesting (lighter than a VM, but unsupported by Proxmox and fragile with bind mounts); Docker on the Proxmox host (fights Proxmox's iptables and bridges). |
 
 ### 25.3 Open questions
 

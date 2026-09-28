@@ -19,6 +19,7 @@ Effort assumes evenings and weekends, about 10 to 12 hours per week. A "day" is 
 
 Progress log (newest first):
 
+- 2026-09-26: D24 recorded: whole local stack in WSL2 on the workstation (64 GB, i9-14900K, RTX 5090). SPEC.md 0.2.1.
 - 2026-09-26: NVD API key received (Q15 closed). `.env.example` created.
 - 2026-09-26: SPEC.md 0.2.0 committed. Plan created. Nothing built yet.
 
@@ -26,7 +27,7 @@ Progress log (newest first):
 
 - [x] Request an NVD API key (https://nvd.nist.gov/developers/request-an-api-key). Received 2026-09-26. Stored in local `.env` as `NVD_API_KEY`, never committed.
 - [ ] Read SPEC.md section 25.1 and confirm or change the nine assumptions.
-- [ ] Decide where Phase 1 runs: WSL2 on the workstation (recommended to start) or the Proxmox VM.
+- [x] Decide where Phase 1 runs. Decided 2026-09-26 (D24): the whole stack runs in WSL2 on the workstation; no Proxmox VM.
 - [ ] Decide whether to pull A04, A05, A13 (image signing, AI BOM, red team pass) forward from Phase 6 to Phase 4.
 
 ## Phase 0: repository skeleton (about 2 days)
@@ -161,7 +162,7 @@ Serving:
 - [ ] vLLM 0.30 launch script for Ministral 3 14B FP8 with the flags in SPEC.md section 19.2; resolve Q07 with a 30 minute FP8 versus AWQ benchmark
 - [ ] A03: `safetensors` only, no `trust_remote_code`, read-only model cache, pinned revision with recorded hash
 - [ ] Embeddings endpoint (BGE-M3 on vLLM or in-process); dimension in config
-- [ ] WSL2 networking so the data plane host reaches port 8000
+- [ ] vLLM as a Compose service on the shared network (D24); `model.base_url` is `http://vllm:8000/v1` in containers; raise `.wslconfig` to 48 GB and 16 processors first
 - [ ] `evals/structured_output_conformance.py` passing against vLLM
 
 Documents and retrieval:

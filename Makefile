@@ -2,6 +2,8 @@
 .PHONY: lint test config generate up-phase1 up eval replay sync
 
 UV ?= uv
+# Keys ending in _env hold environment variable names, never values (CLAUDE.md rule 3).
+ENV_NAME_LINE_FILTER = _env"?\s*[:=]
 
 sync:
 	$(UV) sync --all-extras
@@ -9,7 +11,7 @@ sync:
 lint:
 	$(UV) run ruff check .
 	$(UV) run ruff format --check .
-	$(UV) run detect-secrets-hook --baseline .secrets.baseline $$(git ls-files)
+	$(UV) run detect-secrets-hook --baseline .secrets.baseline --exclude-lines '$(ENV_NAME_LINE_FILTER)' $$(git ls-files)
 	$(UV) run python tools/check_emdash.py
 	$(UV) run python tools/check_hosted_import.py
 

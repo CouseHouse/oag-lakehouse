@@ -9,7 +9,8 @@ repos:
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        args: [--baseline, .secrets.baseline]
+        # Keys ending in _env hold environment variable names, never values.
+        args: [--baseline, .secrets.baseline, --exclude-lines, '_env"?\s*[:=]']
   - repo: local
     hooks:
       - id: no-em-dash

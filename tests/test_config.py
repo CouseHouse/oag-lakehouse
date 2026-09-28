@@ -9,9 +9,9 @@ from agent.config import ConfigError, load_config, referenced_env_vars
 CONFIG_DIR = Path(__file__).resolve().parent.parent / "config"
 FAKE_ENV = {
     "OAG_S3_ACCESS_KEY": "ak",
-    "OAG_S3_SECRET_KEY": "sk",
-    "PGVECTOR_PASSWORD": "pgv-secret",
-    "AGE_PASSWORD": "age-secret",
+    "OAG_S3_SECRET_KEY": "sk",  # pragma: allowlist secret
+    "PGVECTOR_PASSWORD": "pgv-secret",  # pragma: allowlist secret
+    "AGE_PASSWORD": "age-secret",  # pragma: allowlist secret
 }
 
 

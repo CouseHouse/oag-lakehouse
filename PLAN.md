@@ -227,7 +227,7 @@ Extraction loop:
 
 - [ ] Flow `advisory_text` with a NiFi Python processor for HTML extraction; resolve Q10
 - [ ] Extraction templates in `schema/extract/` (affected product, exploitation, weakness)
-- [ ] `extract_candidates` (project extractor first; OntoGPT as an experiment)
+- [ ] `extract_candidates` (project extractor; OntoGPT comparison in `evals/` through a `ModelPort`-backed duck-typed client, see SPEC.md 11.2 finding)
 - [ ] Alignment rules (exact id, lexical, embedding, thresholds)
 - [ ] `validate_candidates` on a WAP branch with the candidate shapes
 - [ ] Review queue in the approval UI; approve, reject, defer

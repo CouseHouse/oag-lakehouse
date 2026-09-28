@@ -7,7 +7,7 @@ Ontology-Augmented Generation for Federal Vulnerability and Compliance Managemen
 | Field | Value |
 |---|---|
 | Document | SPEC.md |
-| Version | 0.2.1 |
+| Version | 0.2.2 |
 | Date | 2026-09-26 |
 | Status | Draft for build. Not yet reviewed by a second person. |
 | Owner | Kyle Couse |
@@ -21,6 +21,7 @@ Change log
 | 0.1.0 | 2026-09-26 | Kyle Couse (drafted with Claude Fable 5.1) | Initial build-ready draft. Use case selected, ontology scoped, pipelines and milestones defined. |
 | 0.2.0 | 2026-09-26 | Kyle Couse (drafted with Claude Fable 5.1) | Section 16 extended with OWASP LLM and Agentic Top 10 mappings, MITRE ATLAS, the system's own 800-53 controls, data, model and supply chain governance, separation of duties, incident response, and federal AI governance alignment. Security actions A01 to A15 added to milestones. |
 | 0.2.1 | 2026-09-26 | Kyle Couse (drafted with Claude Fable 5.1) | D24: the whole local stack runs in WSL2 on the workstation; the Proxmox VM is dropped from the baseline. Assumption 25.1.1 replaced with measured workstation specs. Sections 8.2 and 19.1 updated. |
+| 0.2.2 | 2026-09-28 | Kyle Couse (drafted with Claude Fable 5.1) | Section 11.2: OntoGPT 1.2.0 source evaluated; the assumption that OntoGPT is used as a library is replaced with a finding and a template compatibility rule. |
 
 Conventions used in this document:
 
@@ -929,7 +930,7 @@ Unstructured sources (CISA advisories, vendor advisories, NVD descriptions) cont
 
 ### 11.2 Extraction
 
-The extractor follows the SPIRES method (OntoGPT): a LinkML template defines the output structure, the prompt asks the model to fill it, and the output is parsed into the template's classes with grounding of named entities to identifiers. OntoGPT 1.2.0 (**Verify:** section 19) supports OpenAI-compatible endpoints through LiteLLM, so it can point at vLLM and later at Cloudera AI Inference. **Assumption:** OntoGPT is used as a library for the template and parsing logic; the model call goes through the project's `ModelPort` so tracing and cost accounting are uniform. If OntoGPT's LiteLLM path proves hard to route through `ModelPort`, the project uses a documented equivalent: the same LinkML template, a project prompt, JSON schema guided decoding to the generated Pydantic model, and oaklib-style lexical grounding. The equivalent is written first as a fallback and OntoGPT is a Phase 5 experiment.
+The extractor follows the SPIRES method (OntoGPT): a LinkML template defines the output structure, the prompt asks the model to fill it, and the output is parsed into the template's classes with grounding of named entities to identifiers. OntoGPT 1.2.0 (**Verify:** section 19) supports OpenAI-compatible endpoints through LiteLLM, so it can point at vLLM and later at Cloudera AI Inference. **Finding (2026-09-28, OntoGPT 1.2.0 source at commit 9224d33):** OntoGPT is not used as a library in the extraction path. The project extractor is primary; OntoGPT runs only as a Phase 5 comparison under `evals/`. LiteLLM is not the only way to drive it: `KnowledgeEngine.client` is an untyped dataclass field and SPIRES calls only `client.complete(prompt, show_prompt=...)` expecting a string, so a `ModelPort`-backed object drops in (LiteLLM must still be installed because the engine module imports it). Four properties of the engine rule it out as the primary path: (1) no structured output, the prompt asks for `field: <description>` lines and the parser scrapes pseudo-YAML, flattening JSON lists to semicolon strings, so D11's JSON schema guarantee is lost; (2) `LLMClient.complete` calls `sys.exit` on authentication, 400, 404, and 503 errors, which would kill a Spark executor or the agent process; (3) hidden side effects, the engine defaults its identifier mappers to the NCATS Translator web service and sets a process-global LiteLLM disk cache, both violating the port rule unless disabled explicitly; (4) grounding operates on the string the model returned, with a label dictionary then oaklib annotators, not on spans in the source text, and has no confidence levels, so it cannot satisfy the evidence span requirement on its own. About 27 direct dependencies (LiteLLM, PyMuPDF, SciPy, wikipedia, bioc) would otherwise land in the agent image and the AI BOM. **Rule:** the three templates in `schema/extract/` use OntoGPT's template conventions (`prompt`, `annotators`, and `examples` annotations, `id_prefixes`, the `AUTO:` prefix for ungrounded mentions, the examples-based hallucination check) so that OntoGPT can run them unchanged in the comparison. License BSD-3; project active (71 bundled templates, Python 3.10 to 3.14).
 
 Templates, in `schema/extract/`:
 

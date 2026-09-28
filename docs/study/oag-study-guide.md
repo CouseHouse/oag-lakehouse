@@ -230,13 +230,23 @@ extraction recurses into it. Annotators (OAK adapters such as `sqlite:obo:chebi`
 extracted mention to an identifier; unmatched mentions get `AUTO:` identifiers.
 
 **Templates.** A template is a LinkML schema subset: prefixes, classes, slots, enums, with
-`prompt` annotations that override slot descriptions in the generated prompt. About 40 bundled
-templates exist, mostly biomedical.
+`prompt` annotations that override slot descriptions in the generated prompt. 71 bundled
+templates exist in 1.2.0, mostly biomedical.
 
 **What this project takes.** The template idea (`schema/extract/`), grounding to existing
 identifiers, and the rule that ungrounded mentions are proposals, not facts. **What it changes.**
 Output goes to a candidate table with SHACL validation and human review before anything reaches
 the knowledge base; SPIRES itself writes what it extracts.
+
+**What the source shows (1.2.0, read 2026-09-28).** The prompt is `field: <description>` lines
+and the parser scrapes pseudo-YAML; there is no JSON schema mode. The bundled client routes
+through LiteLLM and exits the process on API errors. The engine is duck-typed, though: any
+object with `complete(prompt) -> str` can be passed as the client. Grounding happens on the
+extracted string (label dictionary, then OAK annotators), not on spans in the source text, and
+unmapped prefixes are sent to the NCATS Translator service by default. Interview line: "we
+kept SPIRES's template conventions and its rule that ungrounded mentions are proposals, but
+replaced the free-text parse with schema-constrained decoding and ground against spans so every
+candidate carries evidence."
 
 ## 5. Palantir's Ontology in depth
 

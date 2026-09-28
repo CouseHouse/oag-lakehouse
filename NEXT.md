@@ -42,7 +42,7 @@ Nothing has been built. Every file so far is documentation, configuration for Cl
 
 ## Open decisions for the user (not yet answered)
 
-- Confirm or change the nine assumptions in SPEC.md section 25.1 (VM sizing, Spark and Airflow majors, model, synthetic agency size, Langfuse v4, file sinks, unsecured Ozone, BGE-M3, no Kafka, not high-impact AI under OMB M-25-21).
+- Confirm or change the eight remaining assumptions in SPEC.md section 25.1 (Spark and Airflow majors, model, synthetic agency size, Langfuse v4, file sinks, unsecured Ozone, BGE-M3, no Kafka). Assumption 1 was settled by D24.
 - Whether to pull security actions A04, A05, A13 (image signing, AI BOM, red team pass) forward from Phase 6 to Phase 4.
 - Whether Claude scaffolds Phase 0 or the user builds it by hand for learning value.
 

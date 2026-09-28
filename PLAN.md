@@ -11,7 +11,7 @@ Effort assumes evenings and weekends, about 10 to 12 hours per week. A "day" is 
 
 | Field | Value |
 |---|---|
-| Current phase | 0 complete; 1 not started |
+| Current phase | 1 (Phase 0 exited 2026-09-28) |
 | Started | 2026-09-26 |
 | Last updated | 2026-09-28 |
 | Next milestone | Phase 1: resolve Q08, then the Compose `foundation` profile |
@@ -52,7 +52,7 @@ Exit criteria:
 
 - [x] `make lint` passes (2026-09-28)
 - [x] `python -m agent.config --env local` prints a redacted config (2026-09-28)
-- [ ] CI is green on `main`
+- [x] CI is green on `main` (2026-09-28, run 36433230447)
 
 ## Phase 1: foundation (about 5 days)
 

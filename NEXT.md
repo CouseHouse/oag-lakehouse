@@ -10,7 +10,7 @@ Last updated: 2026-09-28, end of the second session.
 
 Repository: https://github.com/CouseHouse/oag-lakehouse (private). Local: /home/butters/projects/oag_project. Branch main, clean, pushed.
 
-Phase 0 (repository skeleton) is built: directory tree, `pyproject.toml` with uv, config loader, Makefile, pre-commit, lint tools, tests, GitHub Actions. No service runs yet. Phase 1 has not started.
+Phase 0 (repository skeleton) exited on 2026-09-28 with CI green: directory tree, `pyproject.toml` with uv, config loader, Makefile, pre-commit, lint tools, tests, GitHub Actions. No service runs yet. Phase 1 has not started. Before Phase 1 the owner must raise `.wslconfig` and enable Docker Desktop WSL integration (item 12 below).
 
 | File | Purpose | Status |
 |---|---|---|
@@ -50,9 +50,8 @@ None. All four pre-Phase 0 decisions were answered on 2026-09-28: assumptions 2 
 
 ## Next steps, in order
 
-1. Confirm CI is green on `main` (the last Phase 0 exit criterion) and check the box in PLAN.md.
-2. Phase 1: Compose `foundation` profile (Ozone 2.2.1, Polaris 1.7.0, Spark 3.5.x, Trino 483), Polaris catalog on Ozone with `--no-sts` and path-style access, `tools/smoke_phase1.py`. Resolve Q08 first (Spark image tag and Iceberg runtime Scala variant). Exit criteria in PLAN.md.
-3. Update PLAN.md status table and progress log at the end of every session. Check off items as they land.
+1. Phase 1: Compose `foundation` profile (Ozone 2.2.1, Polaris 1.7.0, Spark 3.5.x, Trino 483), Polaris catalog on Ozone with `--no-sts` and path-style access, `tools/smoke_phase1.py`. Resolve Q08 first (Spark image tag and Iceberg runtime Scala variant). Exit criteria in PLAN.md.
+2. Update PLAN.md status table and progress log at the end of every session. Check off items as they land.
 
 ## Conventions for the next session
 
